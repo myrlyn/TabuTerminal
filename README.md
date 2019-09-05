@@ -28,3 +28,6 @@ Plugins must implement a single-parameter constructor that takes the TabuTermina
    
 Plugins should implement the removePlugin method that undoes the changes to the TabuTerminal object.  
 
+LICENSE
+=========
+Licensed under the MIT license for compatibility with underlying components. 
