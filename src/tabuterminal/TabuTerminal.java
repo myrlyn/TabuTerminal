@@ -1,7 +1,6 @@
 package tabuterminal;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -149,12 +148,7 @@ public class TabuTerminal extends Application {
 		File pd = new File(pluginsDir);
 		if (pd.exists()) {
 			if (pd.isDirectory()) {
-				String[] jars = pd.list(new FilenameFilter() {
-					@Override
-					public boolean accept(File dir, String name) {
-						return name.toLowerCase().endsWith(".jar");
-					}
-				});
+				String[] jars = pd.list( (File dir, String name)  -> name.toLowerCase().endsWith(".jar") );
 				for (String jar : jars) {
 					loadAndInitializePlugin(jar);
 				}
@@ -179,8 +173,8 @@ public class TabuTerminal extends Application {
 				while (pluginEntries.hasMoreElements()) {
 					JarEntry entry = pluginEntries.nextElement();
 					if (!entry.isDirectory() && entry.getName().endsWith("class")) {
-						// -6 because ".class".length = 6, so we strip '.class off the end of the
-						// classname we want to load
+						// -6 because ".class".length == 6, so to strip '.class off the end of the
+						// classname we want to load, we remove the last 6 characters
 						String className = entry.getName().substring(0, entry.getName().length() - 6);
 						className = className.replace('/', '.');// replace separators with dots to construct full class name
 						Class<?> c = jarloader.loadClass(className);
@@ -326,20 +320,14 @@ public class TabuTerminal extends Application {
 	}
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-
-			@Override
-			public void handle(WindowEvent event) {
-				closeAndExit();
-			}
-			
-		});
+		primaryStage.setOnCloseRequest((WindowEvent event) -> closeAndExit() );
 		String cygbash = "C:\\cygwin64\\bin\\bash.exe";
 		String cygflags = " -i -l";
+		String cmdDefault = "C:\\WINDOWS\\system32\\cmd.exe";
 		if (new File(cygbash).canExecute()) {
 			logger.info("Cygwin bash found, using cygwin as default shell");
 			this.setDefaultTerminalCommand(cygbash+cygflags);
-		}else if (new File("C:\\WINDOWS\\system32\\cmd.exe").canExecute()){
+		}else if (new File(cmdDefault).canExecute()){
 			logger.info("Cygwin bash not found, using cmd.exe as default shell");
 			this.setDefaultTerminalCommand("C:\\WINDOWS\\system32\\cmd.exe");			
 		}else {
@@ -350,7 +338,6 @@ public class TabuTerminal extends Application {
 			            cmdPrompt = file.getAbsolutePath();
 			        }
 			    }
-			    System.out.println(cmdPrompt);
 				this.setDefaultTerminalCommand(cmdPrompt);			
 		}
 		defaultTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
@@ -364,39 +351,12 @@ public class TabuTerminal extends Application {
 		fileMenu.getItems().add(exitApp);
 		menuBar.getMenus().add(fileMenu);
 		menuBar.getMenus().add(tabMenu);
-		newTab.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent arg0) {
-				addTerminalTab();
-			}
-		});
+		newTab.setOnAction( (ActionEvent act) -> addTerminalTab() );
 		
 		MenuItem renameTabMenuItem = new MenuItem("Rename Tab");
-		renameTabMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent event) {
-				renameTab();
-				
-			}
-			
-		});
-		closeTab.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				closeAndExit();	
-			}
-
-			
-		});
-		exitApp.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				closeAndExit();
-			}
-		});
+		renameTabMenuItem.setOnAction( (ActionEvent event) -> renameTab() );
+		closeTab.setOnAction( (ActionEvent evt) -> closeAndExit() );
+		exitApp.setOnAction( (ActionEvent evt) -> closeAndExit() );
 		addTerminalTab();
 		rootBox.getChildren().add(menuBar);
 		VBox.setVgrow(tabPane, Priority.ALWAYS);

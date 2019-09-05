@@ -1,10 +1,10 @@
 module TabuTerminal {
 	exports tabuterminal;
 
-	requires com.kodedu.terminalfx;
-	requires java.logging;
-	requires javafx.base;
-	requires javafx.controls;
-	requires javafx.graphics;
-	requires pty4j;
+	requires transitive com.kodedu.terminalfx;
+	requires transitive java.logging;
+	requires transitive javafx.base;
+	requires transitive javafx.controls;
+	requires transitive javafx.graphics;
+	requires transitive pty4j;
 }
