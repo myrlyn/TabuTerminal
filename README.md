@@ -30,4 +30,9 @@ Plugins should implement the removePlugin method that undoes the changes to the 
 
 LICENSE
 =========
-Licensed under the MIT license for compatibility with underlying components. 
+Licensed under the APACHE V2 license for compatibility with underlying components. 
+
+PLINK licensensed under GPL
+
+JavaFX licensed under BSD 
+
