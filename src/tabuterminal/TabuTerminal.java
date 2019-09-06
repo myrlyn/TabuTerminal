@@ -449,7 +449,7 @@ public class TabuTerminal extends Application {
 		closeTab.setOnAction((ActionEvent evt) -> closeAndExit());
 		exitApp.setOnAction((ActionEvent evt) -> closeAndExit());
 		addTerminalTab();
-		addPlinkTab(primaryStage);
+		//addPlinkTab(primaryStage);
 		rootBox.getChildren().add(menuBar);
 		VBox.setVgrow(tabPane, Priority.ALWAYS);
 		rootBox.getChildren().add(tabPane);
