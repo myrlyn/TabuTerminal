@@ -54,11 +54,11 @@ public class TabuTerminal extends Application {
 	public static void main(String[] args) {
 		launch(args);
 	}
-	
+
 	private Stage mainWindow = null;
 
 	private String defaultTerminalCommand = "C:\\cygwin64\\bin\\bash.exe -i -l";
-	
+
 	private TerminalConfig plinkTerminalConfig = new TerminalConfig();
 
 	private TerminalConfig defaultTerminalConfig = new TerminalConfig();
@@ -86,8 +86,8 @@ public class TabuTerminal extends Application {
 	private MenuItem exitApp = new MenuItem("Exit");
 
 	private Map<String, TabuTerminalPlugin_V1> pluginMapV1 = new HashMap<>();
-	
-	private TerminalBuilder plinkTerminalBuilder = null;
+
+	private TerminalBuilder sshTerminalBuilder = null;
 
 	private void addTerminalTab() {
 		TerminalTab terminal = defaultTerminalBuilder.newTerminal();
@@ -106,50 +106,62 @@ public class TabuTerminal extends Application {
 		tabPane.getTabs().add(terminal);
 
 	}
-	private void addPlinkTab(Stage mainStage) {
+
+	private void addSSHTab(Stage mainStage) {
 		Stage dialog = new Stage();
 		dialog.initModality(Modality.APPLICATION_MODAL);
 		dialog.initOwner(mainStage);
 		VBox dialogVBox = new VBox();
-		
-		
-		
+		String homeDir = System.getProperty("user.home");
+		System.out.println(homeDir);
 		Text userText = new Text("UserName");
 		userText.toFront();
 		VBox.setVgrow(userText, Priority.ALWAYS);
 		dialogVBox.getChildren().add(userText);
-		TextField userNameField = new TextField ();
+		TextField userNameField = new TextField();
 		VBox.setVgrow(userNameField, Priority.ALWAYS);
 		dialogVBox.getChildren().add(userNameField);
-		
-		Text passwordText = new Text("Password");
-		dialogVBox.getChildren().add(passwordText);
-		PasswordField passwordField = new PasswordField ();
-		dialogVBox.getChildren().add(passwordField);
-		
+
 		dialogVBox.getChildren().add(new Text("Hostname"));
-		TextField hostnameField = new TextField ();
+		TextField hostnameField = new TextField();
 		dialogVBox.getChildren().add(hostnameField);
 		
+		dialogVBox.getChildren().add(new Text("Ssh Arguments"));
+		TextField sshargsField = new TextField();
+		dialogVBox.getChildren().add(sshargsField);
+
+		
+
 		Button connectButton = new Button("Connect");
 		connectButton.addEventHandler(ActionEvent.ANY, evt -> {
 			String username = userNameField.getText();
-			String password = passwordField.getText();
 			String hostname = hostnameField.getText();
-			URL plinkFile = TabuTerminal.class.getResource("plink.exe");
-			String plinkFileName = plinkFile.getFile();
-			String cmd = plinkFileName+" -l "+username+" -pw "+password+" "+hostname;
-			plinkTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(cmd);
-			TerminalTab plinkTab = plinkTerminalBuilder.newTerminal();
-			tabPane.getTabs().add(plinkTab);
+			String args = sshargsField.getText();
+			URL sshFile = TabuTerminal.class.getResource("ssh/bin/ssh.exe");
+			String sshFileName = sshFile.getFile();
+			File f = new File(sshFileName);
+			String cmd = f.getAbsolutePath();
+			String sshDir = homeDir+File.separator+".ssh";
+			File sshDirFile = new File(homeDir+File.separator+".ssh");
+			if (!sshDirFile.exists()) {
+				sshDirFile.mkdirs();
+			}
+			cmd = cmd +"-F "+sshDir+File.separator+"ssh_config -o UserKnownHostsFile="+sshDir+File.separator+"known_hosts "+args+" ";
+			if (!"".equalsIgnoreCase(username))
+				cmd+=" "+username+"@";
+			cmd+=hostname;
+			sshTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(cmd);
+			TerminalTab sshTab = sshTerminalBuilder.newTerminal();
+			tabPane.getTabs().add(sshTab);
 			dialog.close();
 		});
 		dialogVBox.getChildren().add(connectButton);
 		Scene dialogScene = new Scene(dialogVBox);
 		dialog.setScene(dialogScene);
 		dialog.showAndWait();
-		
+
 	}
+
 	public MenuItem getCloseTab() {
 		return closeTab;
 	}
@@ -388,55 +400,57 @@ public class TabuTerminal extends Application {
 			childproc.destroy();
 		}
 	}
-	
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		this.mainWindow = primaryStage;
 		primaryStage.setOnCloseRequest((WindowEvent event) -> closeAndExit());
 		String cygbash = "C:\\cygwin64\\bin\\bash.exe";
-		String cygflags = " -i -l";
-		String cmdDefault = "C:\\WINDOWS\\system32\\cmd.exe";
-		if (new File(cygbash).canExecute()) {
+		String bashflags = " -i -l";
+		String cmdPrompt = "";
+		if (new File(cygbash).canExecute()) { // start cygwin if it is installed
 			logger.info("Cygwin bash found, using cygwin as default shell");
-			this.setDefaultTerminalCommand(cygbash + cygflags);
-		} else if (new File(cmdDefault).canExecute()) {
-			logger.info("Cygwin bash not found, using cmd.exe as default shell");
-			this.setDefaultTerminalCommand("C:\\WINDOWS\\system32\\cmd.exe");
-		} else {
-			String cmdPrompt = "";
-			for (String dirname : System.getenv("PATH").split(File.pathSeparator)) {
-				File file = new File(dirname, "cmd.exe");
-				if (file.isFile() && file.canExecute()) {
-					cmdPrompt = file.getAbsolutePath();
+			this.setDefaultTerminalCommand(cygbash + bashflags);
+		} else { //otherwise, find a command interpreter
+			cmdPrompt = findBashPrompt();
+			if (cmdPrompt.equalsIgnoreCase("")) {
+				cmdPrompt = findShPrompt();
+				if (cmdPrompt.equalsIgnoreCase("")) {
+					if (cmdPrompt.equalsIgnoreCase("")) {
+						cmdPrompt = findCmdPrompt();
+					}
 				}
 			}
+
+			else
+				cmdPrompt = cmdPrompt + bashflags;
 			this.setDefaultTerminalCommand(cmdPrompt);
 		}
+
 		defaultTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
 		defaultTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
 		defaultTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
 		defaultTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
 		defaultTerminalConfig.setCopyOnSelect(true);
 		defaultTerminalBuilder = new TerminalBuilder(defaultTerminalConfig);
-		
+
 		plinkTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
 		plinkTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
 		plinkTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
 		plinkTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
 		plinkTerminalConfig.setCopyOnSelect(true);
-		plinkTerminalBuilder = new TerminalBuilder(plinkTerminalConfig);
-		plinkTerminalBuilder.setNameGenerator(new TabNameGenerator() {
+		sshTerminalBuilder = new TerminalBuilder(plinkTerminalConfig);
+		sshTerminalBuilder.setNameGenerator(new TabNameGenerator() {
 			private long tabNumber = 1;
+
 			@Override
 			public String next() {
 				// TODO Auto-generated method stub
-				return "SSH: "+tabNumber++;
+				return "SSH: " + tabNumber++;
 			}
-			
+
 		});
-		
-		
+
 		tabMenu.getItems().add(newTab);
 		tabMenu.getItems().add(closeTab);
 		fileMenu.getItems().add(exitApp);
@@ -449,7 +463,13 @@ public class TabuTerminal extends Application {
 		closeTab.setOnAction((ActionEvent evt) -> closeAndExit());
 		exitApp.setOnAction((ActionEvent evt) -> closeAndExit());
 		addTerminalTab();
-		//addPlinkTab(primaryStage);
+
+		MenuItem sshTabItem = new MenuItem("New SSH Tab");
+		tabMenu.getItems().add(sshTabItem);
+		sshTabItem.setOnAction(evt -> {
+			this.addSSHTab(primaryStage);
+		});
+		
 		rootBox.getChildren().add(menuBar);
 		VBox.setVgrow(tabPane, Priority.ALWAYS);
 		rootBox.getChildren().add(tabPane);
@@ -459,5 +479,38 @@ public class TabuTerminal extends Application {
 		primaryStage.getIcons().add(new Image(TabuTerminal.class.getResourceAsStream("tabu.png")));
 		primaryStage.setScene(scene);
 		primaryStage.show();
+	}
+
+	private String findCmdPrompt() {
+		String cmdPrompt = "";
+		for (String dirname : System.getenv("PATH").split(File.pathSeparator)) {
+			File file = new File(dirname, "cmd.exe");
+			if (file.isFile() && file.canExecute()) {
+				cmdPrompt = file.getAbsolutePath();
+			}
+		}
+		return cmdPrompt;
+	}
+
+	private String findBashPrompt() {
+		String cmdPrompt = "";
+		for (String dirname : System.getenv("PATH").split(File.pathSeparator)) {
+			File file = new File(dirname, "bash.exe");
+			if (file.isFile() && file.canExecute()) {
+				cmdPrompt = file.getAbsolutePath();
+			}
+		}
+		return cmdPrompt + " -i -l";
+	}
+
+	private String findShPrompt() {
+		String cmdPrompt = "";
+		for (String dirname : System.getenv("PATH").split(File.pathSeparator)) {
+			File file = new File(dirname, "sh.exe");
+			if (file.isFile() && file.canExecute()) {
+				cmdPrompt = file.getAbsolutePath();
+			}
+		}
+		return cmdPrompt;
 	}
 }
