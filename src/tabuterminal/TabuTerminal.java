@@ -59,7 +59,7 @@ public class TabuTerminal extends Application {
 
 	private String defaultTerminalCommand = "C:\\cygwin64\\bin\\bash.exe -i -l";
 
-	private TerminalConfig plinkTerminalConfig = new TerminalConfig();
+	private TerminalConfig sshTerminalConfig = new TerminalConfig();
 
 	private TerminalConfig defaultTerminalConfig = new TerminalConfig();
 
@@ -104,7 +104,7 @@ public class TabuTerminal extends Application {
 		});
 		terminal.getContextMenu().getItems().add(contextRenameTab);
 		tabPane.getTabs().add(terminal);
-
+		tabPane.getSelectionModel().select(terminal);
 	}
 
 	private void addSSHTab(Stage mainStage) {
@@ -113,15 +113,18 @@ public class TabuTerminal extends Application {
 		dialog.initOwner(mainStage);
 		VBox dialogVBox = new VBox();
 		String homeDir = System.getProperty("user.home");
-		System.out.println(homeDir);
 		Text userText = new Text("UserName");
-		userText.toFront();
+
+
+		String usernameVal = System.getProperty("user.name");
+
 		VBox.setVgrow(userText, Priority.ALWAYS);
 		dialogVBox.getChildren().add(userText);
 		TextField userNameField = new TextField();
 		VBox.setVgrow(userNameField, Priority.ALWAYS);
 		dialogVBox.getChildren().add(userNameField);
-
+		userNameField.setText(usernameVal);
+		
 		dialogVBox.getChildren().add(new Text("Hostname"));
 		TextField hostnameField = new TextField();
 		dialogVBox.getChildren().add(hostnameField);
@@ -129,7 +132,24 @@ public class TabuTerminal extends Application {
 		dialogVBox.getChildren().add(new Text("Ssh Arguments"));
 		TextField sshargsField = new TextField();
 		dialogVBox.getChildren().add(sshargsField);
-
+		
+		String sshDir = homeDir+File.separator+".ssh";
+		String knownHosts = sshDir+File.separator+"known_hosts";
+		
+		dialogVBox.getChildren().add(new Text("Known Hosts File"));
+		TextField knownHostsField = new TextField();
+		dialogVBox.getChildren().add(knownHostsField);
+		knownHostsField.setText(knownHosts);
+		
+		URL cfFile = TabuTerminal.class.getResource("ssh/bin/ssh_config");
+		String cfFileName = cfFile.getFile();
+		File cf = new File(cfFileName);
+		String cfs = cf.getAbsolutePath();
+		dialogVBox.getChildren().add(new Text("SSH Config File"));
+		TextField confFileField = new TextField();
+		dialogVBox.getChildren().add(confFileField);
+		confFileField.setText(cfs);
+		
 		
 
 		Button connectButton = new Button("Connect");
@@ -137,26 +157,29 @@ public class TabuTerminal extends Application {
 			String username = userNameField.getText();
 			String hostname = hostnameField.getText();
 			String args = sshargsField.getText();
+			String conf = confFileField.getText();
+			String knownHostsfl = knownHostsField.getText();
 			URL sshFile = TabuTerminal.class.getResource("ssh/bin/ssh.exe");
 			String sshFileName = sshFile.getFile();
 			File f = new File(sshFileName);
 			String cmd = f.getAbsolutePath();
-			String sshDir = homeDir+File.separator+".ssh";
 			File sshDirFile = new File(homeDir+File.separator+".ssh");
 			if (!sshDirFile.exists()) {
 				sshDirFile.mkdirs();
 			}
-			cmd = cmd +"-F "+sshDir+File.separator+"ssh_config -o UserKnownHostsFile="+sshDir+File.separator+"known_hosts "+args+" ";
+			
+			cmd = cmd +" -o UserKnownHostsFile="+knownHostsfl+" -F "+" "+conf+" "+args+" ";
 			if (!"".equalsIgnoreCase(username))
 				cmd+=" "+username+"@";
 			cmd+=hostname;
 			sshTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(cmd);
 			TerminalTab sshTab = sshTerminalBuilder.newTerminal();
 			tabPane.getTabs().add(sshTab);
+			tabPane.getSelectionModel().select(sshTab);
 			dialog.close();
 		});
 		dialogVBox.getChildren().add(connectButton);
-		Scene dialogScene = new Scene(dialogVBox);
+		Scene dialogScene = new Scene(dialogVBox, 1115, 755);
 		dialog.setScene(dialogScene);
 		dialog.showAndWait();
 
@@ -363,7 +386,7 @@ public class TabuTerminal extends Application {
 				TerminalTab ttab = (TerminalTab) tab;
 				PtyProcess proc = ttab.getProcess();
 				if (proc != null)
-					proc.destroy();
+					proc.destroyForcibly();
 			}
 		}
 		logger.info("Goodbye");
@@ -434,12 +457,12 @@ public class TabuTerminal extends Application {
 		defaultTerminalConfig.setCopyOnSelect(true);
 		defaultTerminalBuilder = new TerminalBuilder(defaultTerminalConfig);
 
-		plinkTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
-		plinkTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
-		plinkTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
-		plinkTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
-		plinkTerminalConfig.setCopyOnSelect(true);
-		sshTerminalBuilder = new TerminalBuilder(plinkTerminalConfig);
+		sshTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
+		sshTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
+		sshTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
+		sshTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
+		sshTerminalConfig.setCopyOnSelect(true);
+		sshTerminalBuilder = new TerminalBuilder(sshTerminalConfig);
 		sshTerminalBuilder.setNameGenerator(new TabNameGenerator() {
 			private long tabNumber = 1;
 

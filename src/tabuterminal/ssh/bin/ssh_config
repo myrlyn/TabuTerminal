@@ -1,0 +1,4 @@
+ForwardX11 yes
+Compression yes
+ForwardX11Trusted yes
+StrictHostKeyChecking no

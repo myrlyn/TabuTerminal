@@ -30,9 +30,9 @@
 			<plugin>
 				<groupId>com.zenjava</groupId>
 				<artifactId>javafx-maven-plugin</artifactId>
-				<version>8.8.3</version>
+				<version>8.8.0</version>
 				<configuration>
-				<bundler>windows.app</bundler>
+					<bundler>windows.app</bundler>
 					<bundleArguments>
 						<icon>${project.basedir}/main/deploy/package/windows/TabuTerminal.ico</icon>
 					</bundleArguments>
