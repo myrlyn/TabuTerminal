@@ -34,11 +34,12 @@ Licensed under the GPLV2 license.
 
 JavaFX licensed under BSD 
 
-SSH Components from git-for-windows licensed inder GPL
+SSH Components from git-for-windows licensed under GPLV2
 
-PTy4J library under EPL
+PTy4J library under EPL from IntelliJ repository
 
-JACKSON libaries under APL
+JACKSON Libraries under APL
 
+TELNET Components from Cygwin licensed under GPLV2
 
-
+TerminalFX licensed under the MIT license

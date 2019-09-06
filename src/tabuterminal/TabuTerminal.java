@@ -89,6 +89,10 @@ public class TabuTerminal extends Application {
 
 	private TerminalBuilder sshTerminalBuilder = null;
 
+	private TerminalBuilder telTerminalBuilder = null;
+
+	private TerminalConfig telTerminalConfig = null;
+
 	private void addTerminalTab() {
 		TerminalTab terminal = defaultTerminalBuilder.newTerminal();
 		MenuItem contextRenameTab = new MenuItem("Rename Tab");
@@ -107,6 +111,46 @@ public class TabuTerminal extends Application {
 		tabPane.getSelectionModel().select(terminal);
 	}
 
+	private void addTelnetTab(Stage mainStage) {
+		Stage dialog = new Stage();
+		dialog.initModality(Modality.APPLICATION_MODAL);
+		dialog.initOwner(mainStage);
+		VBox dialogVBox = new VBox();
+		Text hostText = new Text("Host");
+		dialogVBox.getChildren().add(hostText);
+		TextField hostnameField = new TextField();
+		dialogVBox.getChildren().add(hostnameField);
+
+		Text portText = new Text("Port");
+		TextField portField = new TextField();
+		dialogVBox.getChildren().add(portText);
+		dialogVBox.getChildren().add(portField);
+		portField.setText("23");
+
+		Text argsText = new Text("Arguments");
+		dialogVBox.getChildren().add(argsText);
+		TextField argsField = new TextField();
+		dialogVBox.getChildren().add(argsField);
+		Scene dialogScene = new Scene(dialogVBox, 1115, 755);
+		dialog.setScene(dialogScene);
+		
+		Button connectButton = new Button("Connect");
+		connectButton.setOnAction(actev -> {
+			URL telUrl = TabuTerminal.class.getResource("ssh/bin/telnet.exe");
+			File telFile = new File(telUrl.getFile());
+			String telnetcmd = telFile.getAbsolutePath();
+			telnetcmd = telnetcmd + " " + argsField.getText() + " " + hostnameField.getText() + " "	+ portField.getText();
+			telTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(telnetcmd);
+			TerminalTab telnetTab = telTerminalBuilder.newTerminal();
+			tabPane.getTabs().add(telnetTab);
+			tabPane.getSelectionModel().select(telnetTab);
+			dialog.close();
+		});
+		dialogVBox.getChildren().add(connectButton);
+		
+		dialog.showAndWait();
+	}
+
 	private void addSSHTab(Stage mainStage) {
 		Stage dialog = new Stage();
 		dialog.initModality(Modality.APPLICATION_MODAL);
@@ -114,7 +158,6 @@ public class TabuTerminal extends Application {
 		VBox dialogVBox = new VBox();
 		String homeDir = System.getProperty("user.home");
 		Text userText = new Text("UserName");
-
 
 		String usernameVal = System.getProperty("user.name");
 
@@ -124,23 +167,23 @@ public class TabuTerminal extends Application {
 		VBox.setVgrow(userNameField, Priority.ALWAYS);
 		dialogVBox.getChildren().add(userNameField);
 		userNameField.setText(usernameVal);
-		
+
 		dialogVBox.getChildren().add(new Text("Hostname"));
 		TextField hostnameField = new TextField();
 		dialogVBox.getChildren().add(hostnameField);
-		
+
 		dialogVBox.getChildren().add(new Text("Ssh Arguments"));
 		TextField sshargsField = new TextField();
 		dialogVBox.getChildren().add(sshargsField);
-		
-		String sshDir = homeDir+File.separator+".ssh";
-		String knownHosts = sshDir+File.separator+"known_hosts";
-		
+
+		String sshDir = homeDir + File.separator + ".ssh";
+		String knownHosts = sshDir + File.separator + "known_hosts";
+
 		dialogVBox.getChildren().add(new Text("Known Hosts File"));
 		TextField knownHostsField = new TextField();
 		dialogVBox.getChildren().add(knownHostsField);
 		knownHostsField.setText(knownHosts);
-		
+
 		URL cfFile = TabuTerminal.class.getResource("ssh/bin/ssh_config");
 		String cfFileName = cfFile.getFile();
 		File cf = new File(cfFileName);
@@ -149,8 +192,6 @@ public class TabuTerminal extends Application {
 		TextField confFileField = new TextField();
 		dialogVBox.getChildren().add(confFileField);
 		confFileField.setText(cfs);
-		
-		
 
 		Button connectButton = new Button("Connect");
 		connectButton.addEventHandler(ActionEvent.ANY, evt -> {
@@ -163,15 +204,15 @@ public class TabuTerminal extends Application {
 			String sshFileName = sshFile.getFile();
 			File f = new File(sshFileName);
 			String cmd = f.getAbsolutePath();
-			File sshDirFile = new File(homeDir+File.separator+".ssh");
+			File sshDirFile = new File(homeDir + File.separator + ".ssh");
 			if (!sshDirFile.exists()) {
 				sshDirFile.mkdirs();
 			}
-			
-			cmd = cmd +" -o UserKnownHostsFile="+knownHostsfl+" -F "+" "+conf+" "+args+" ";
+
+			cmd = cmd + " -o UserKnownHostsFile=" + knownHostsfl + " -F " + " " + conf + " " + args + " ";
 			if (!"".equalsIgnoreCase(username))
-				cmd+=" "+username+"@";
-			cmd+=hostname;
+				cmd += " " + username + "@";
+			cmd += hostname;
 			sshTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(cmd);
 			TerminalTab sshTab = sshTerminalBuilder.newTerminal();
 			tabPane.getTabs().add(sshTab);
@@ -434,14 +475,12 @@ public class TabuTerminal extends Application {
 		if (new File(cygbash).canExecute()) { // start cygwin if it is installed
 			logger.info("Cygwin bash found, using cygwin as default shell");
 			this.setDefaultTerminalCommand(cygbash + bashflags);
-		} else { //otherwise, find a command interpreter
+		} else { // otherwise, find a command interpreter
 			cmdPrompt = findBashPrompt();
 			if (cmdPrompt.equalsIgnoreCase("")) {
 				cmdPrompt = findShPrompt();
 				if (cmdPrompt.equalsIgnoreCase("")) {
-					if (cmdPrompt.equalsIgnoreCase("")) {
-						cmdPrompt = findCmdPrompt();
-					}
+					cmdPrompt = findCmdPrompt();
 				}
 			}
 
@@ -464,6 +503,7 @@ public class TabuTerminal extends Application {
 		sshTerminalConfig.setCopyOnSelect(true);
 		sshTerminalBuilder = new TerminalBuilder(sshTerminalConfig);
 		sshTerminalBuilder.setNameGenerator(new TabNameGenerator() {
+
 			private long tabNumber = 1;
 
 			@Override
@@ -473,14 +513,31 @@ public class TabuTerminal extends Application {
 			}
 
 		});
+		telTerminalConfig = new TerminalConfig();
+		telTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
+		telTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
+		telTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
+		telTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
+		telTerminalConfig.setCopyOnSelect(true);
+		telTerminalBuilder = new TerminalBuilder(sshTerminalConfig);
+		telTerminalBuilder.setNameGenerator(new TabNameGenerator() {
 
+			private long tabNumber = 1;
+
+			@Override
+			public String next() {
+				// TODO Auto-generated method stub
+				return "Telnet: " + tabNumber++;
+			}
+
+		});
 		tabMenu.getItems().add(newTab);
 		tabMenu.getItems().add(closeTab);
 		fileMenu.getItems().add(exitApp);
 		menuBar.getMenus().add(fileMenu);
 		menuBar.getMenus().add(tabMenu);
 		newTab.setOnAction((ActionEvent act) -> addTerminalTab());
-
+		
 		MenuItem renameTabMenuItem = new MenuItem("Rename Tab");
 		renameTabMenuItem.setOnAction((ActionEvent event) -> renameTab());
 		closeTab.setOnAction((ActionEvent evt) -> closeAndExit());
@@ -489,9 +546,15 @@ public class TabuTerminal extends Application {
 
 		MenuItem sshTabItem = new MenuItem("New SSH Tab");
 		tabMenu.getItems().add(sshTabItem);
-		sshTabItem.setOnAction(evt -> {
-			this.addSSHTab(primaryStage);
-		});
+		sshTabItem.setOnAction(evt -> 
+			this.addSSHTab(primaryStage)
+		);
+	
+		MenuItem telTabItem = new MenuItem("New Telnet Tab");
+		tabMenu.getItems().add(telTabItem);
+		telTabItem.setOnAction(evt -> 
+			this.addTelnetTab(primaryStage)
+		);
 		
 		rootBox.getChildren().add(menuBar);
 		VBox.setVgrow(tabPane, Priority.ALWAYS);

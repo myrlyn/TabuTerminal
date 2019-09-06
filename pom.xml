@@ -38,8 +38,8 @@
 					</bundleArguments>
 					<vendor>Jonathon Walker</vendor>
 					<mainClass>tabuterminal.TabuTerminal</mainClass>
-					<nativeReleaseVersion>${version}</nativeReleaseVersion>
-					<appName>${artifactId}</appName>
+					<nativeReleaseVersion>${project.version}</nativeReleaseVersion>
+					<appName>${project.artifactId}</appName>
 					<verbose>true</verbose>
 					<jvmArgs>-Xmx4096m</jvmArgs>
 					<vendor>Jonathon Walker</vendor>
