@@ -1,5 +1,6 @@
 TabuTerminal
 ============
+A tabbed terminal emulator for Windows.  Mostly just a wrapper to add some useful menus to the pre-existing terminalfx project.  
 
 compile from command line
 ---------
@@ -16,15 +17,33 @@ mvn jfx:native
 
 Development
 ===========
-requires 'lib' folder one dir above JAVA_HOME containing ant-javafx.jar for mvn jfx:* commands in order for the "jfx" and "package" maven targets to function.  This is distributed with java 1.8 JDKs.    
+requires 'lib' folder at the same level as JAVA_HOME containing ant-javafx.jar for mvn jfx:* commands in order for the "jfx" and "package" maven targets to function.  This is distributed with java 1.8 JDKs.    
+
+For instance of JAVA_HOME is C:\java\jdk12
+
+You must have C:\java\lib\ant-javafx.jar
 
 javafx:run will execute the application
 
-MSI installer requires wix (wix.sf.net) to be in the execution path.  Licensed under Microsoft Reciprocal License (MS-RL).
+MSI installer requires wix (wix.sf.net) to be in the execution path.  Licensed under Microsoft Reciprocal License (MS-RL). //installer not tested
 
-EXE installer requires iscc in the execution path (https://github.com/jrsoftware/issrc/blob/master/license.txt) 
+EXE installer requires iscc in the execution path (https://github.com/jrsoftware/issrc/blob/master/license.txt) // BUILD NOT TESTED
 
-JAVA_HOME must refer to JDK11+ JDK
+JAVA_HOME must refer to a JDK12+ JDK
+
+Feel free to report bugs/make feature requests, but I wrote this 100% on a lark so I don't know when I will get to them.  I literally wrote this during a week of lunch breaks.  
+
+TODO
+========
+In order of priority
+1. enable persistent settings/configuration.
+2. Enable saved sessions for ssh and telnet. 
+3. Ship bash and busybox as built-in executables, so that we don't have to fall back to CMD if cygwin is not installed.  
+4. Implement a sane plugin system, with versioning, security, and a plugin manager. 
+5. Deprecate and disable V1 plugins. 
+6. Test MSI installer. 
+7. Build and test EXE installer. 
+8. Fix JNLP launcher.  
 
 
 PLUGINS

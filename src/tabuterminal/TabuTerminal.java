@@ -7,7 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import com.google.gson.Gson;
+//import com.google.gson.Gson;
 import com.kodedu.terminalfx.Terminal;
 import com.kodedu.terminalfx.TerminalBuilder;
 import com.kodedu.terminalfx.TerminalTab;
@@ -60,8 +60,7 @@ public class TabuTerminal extends Application {
 		launch(args);
 	}
 	
-	Gson jsonParser = new Gson();
-	
+
 	private Stage mainWindow ;
 
 	private String defaultTerminalCommand = "C:\\cygwin64\\bin\\bash.exe -i -l";
@@ -100,13 +99,7 @@ public class TabuTerminal extends Application {
 
 	private TerminalConfig telTerminalConfig = null;
 
-	public Gson getJsonParser() {
-		return jsonParser;
-	}
-
-	public void setJsonParser(Gson jsonParser) {
-		this.jsonParser = jsonParser;
-	}
+	
 
 	public TerminalConfig getSshTerminalConfig() {
 		return sshTerminalConfig;
