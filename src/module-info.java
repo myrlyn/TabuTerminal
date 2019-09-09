@@ -6,8 +6,9 @@ module TabuTerminal {
 	requires transitive javafx.base;
 	requires transitive javafx.controls;
 	requires transitive javafx.graphics;
-	requires transitive pty4j; 
+	requires transitive pty4j;
 	requires transitive com.fasterxml.jackson.annotation;
 	requires transitive org.apache.commons.lang3;
 	requires transitive com.fasterxml.jackson.databind;
-}
+	requires transitive gson; 
+} 

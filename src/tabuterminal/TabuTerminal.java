@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import com.google.gson.Gson;
 import com.kodedu.terminalfx.Terminal;
 import com.kodedu.terminalfx.TerminalBuilder;
 import com.kodedu.terminalfx.TerminalTab;
@@ -32,14 +33,12 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -51,11 +50,19 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 
 public class TabuTerminal extends Application {
+	private static final String DOT_TABU_TERMINAL = ".TabuTerminal";
+
+	private static final String PLUGINS = "plugins";
+
+	private static final String USER_HOME_PROPERTY_NAME = "user.home";
+
 	public static void main(String[] args) {
 		launch(args);
 	}
-
-	private Stage mainWindow = null;
+	
+	Gson jsonParser = new Gson();
+	
+	private Stage mainWindow ;
 
 	private String defaultTerminalCommand = "C:\\cygwin64\\bin\\bash.exe -i -l";
 
@@ -92,6 +99,46 @@ public class TabuTerminal extends Application {
 	private TerminalBuilder telTerminalBuilder = null;
 
 	private TerminalConfig telTerminalConfig = null;
+
+	public Gson getJsonParser() {
+		return jsonParser;
+	}
+
+	public void setJsonParser(Gson jsonParser) {
+		this.jsonParser = jsonParser;
+	}
+
+	public TerminalConfig getSshTerminalConfig() {
+		return sshTerminalConfig;
+	}
+
+	public void setSshTerminalConfig(TerminalConfig sshTerminalConfig) {
+		this.sshTerminalConfig = sshTerminalConfig;
+	}
+
+	public TerminalBuilder getSshTerminalBuilder() {
+		return sshTerminalBuilder;
+	}
+
+	public void setSshTerminalBuilder(TerminalBuilder sshTerminalBuilder) {
+		this.sshTerminalBuilder = sshTerminalBuilder;
+	}
+
+	public TerminalBuilder getTelTerminalBuilder() {
+		return telTerminalBuilder;
+	}
+
+	public void setTelTerminalBuilder(TerminalBuilder telTerminalBuilder) {
+		this.telTerminalBuilder = telTerminalBuilder;
+	}
+
+	public TerminalConfig getTelTerminalConfig() {
+		return telTerminalConfig;
+	}
+
+	public void setTelTerminalConfig(TerminalConfig telTerminalConfig) {
+		this.telTerminalConfig = telTerminalConfig;
+	}
 
 	private void addTerminalTab() {
 		TerminalTab terminal = defaultTerminalBuilder.newTerminal();
@@ -156,7 +203,7 @@ public class TabuTerminal extends Application {
 		dialog.initModality(Modality.APPLICATION_MODAL);
 		dialog.initOwner(mainStage);
 		VBox dialogVBox = new VBox();
-		String homeDir = System.getProperty("user.home");
+		String homeDir = System.getProperty(USER_HOME_PROPERTY_NAME);
 		Text userText = new Text("UserName");
 
 		String usernameVal = System.getProperty("user.name");
@@ -283,7 +330,7 @@ public class TabuTerminal extends Application {
 	}
 
 	public void loadPlugins() {
-		loadPlugins(System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+		loadPlugins(System.getProperty(USER_HOME_PROPERTY_NAME) + File.separator + DOT_TABU_TERMINAL + File.separator + PLUGINS
 				+ File.separator);
 	}
 
@@ -293,7 +340,7 @@ public class TabuTerminal extends Application {
 			if (pd.isDirectory()) {
 				String[] jars = pd.list((File dir, String name) -> name.toLowerCase().endsWith(".jar"));
 				for (String jar : jars) {
-					logger.info("Found Jar "+jar);
+					logger.log(Level.INFO, () -> "Found Jar "+ jar);
 					loadAndInitializePlugin(jar);
 				}
 			} else {
@@ -305,14 +352,14 @@ public class TabuTerminal extends Application {
 	}
 
 	private void loadAndInitializePlugin(String jar) {
-		logger.info("Initializ this jar: "+jar.toString());
-		try (JarFile jf = new JarFile( System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+		logger.log(Level.INFO,() ->"Initializ this jar: "+jar);
+		try (JarFile jf = new JarFile( System.getProperty(USER_HOME_PROPERTY_NAME) + File.separator + DOT_TABU_TERMINAL + File.separator + PLUGINS
 				+ File.separator + jar);) {
-			logger.info("Check Jar File"+jf.toString());
+			logger.log(Level.INFO, () -> "Check Jar File"+jf.toString());
 			Enumeration<JarEntry> pluginEntries = jf.entries();
-			URL[] urls = { new URL("jar:file:" + System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+			URL[] urls = { new URL("jar:file:" + System.getProperty(USER_HOME_PROPERTY_NAME) + File.separator + DOT_TABU_TERMINAL + File.separator + PLUGINS
 					+ File.separator + jar + "!/") };
-			logger.info("Loader URL: "+urls[0]);
+			logger.log(Level.INFO, () -> "Loader URL: "+urls[0]);
 			try (URLClassLoader jarloader = URLClassLoader.newInstance(urls);) {
 				List<Class<TabuTerminalPlugin_V1>> pluginsToInit;
 				pluginsToInit = new LinkedList<>();
@@ -321,12 +368,12 @@ public class TabuTerminal extends Application {
 					if (!entry.isDirectory() && entry.getName().endsWith("class")) {
 						// -6 because ".class".length == 6, so to strip '.class off the end of the
 						// classname we want to load, we remove the last 6 characters
-						String className = entry.getName().substring(0, entry.getName().length() - 6);
-						className = className.replace('/', '.');// replace separators with dots to construct full class
-						logger.info("Class Name: "+className);										// name
+						// replace separators with dots to construct full classmame
+						String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
+						logger.log(Level.INFO,()->"Class Name: "+className);	
 						Class<?> c = jarloader.loadClass(className);
 						if (TabuTerminalPlugin_V1.class.isAssignableFrom(c)) {
-							pluginsToInit.add((Class<TabuTerminalPlugin_V1>) c);
+							pluginsToInit.add((Class<TabuTerminalPlugin_V1>) c);//SPOTBUGS complains, but the type-checking her is done...
 						}
 					}
 				}
@@ -334,7 +381,7 @@ public class TabuTerminal extends Application {
 					Constructor<TabuTerminalPlugin_V1> pluginConstructor = plugin.getConstructor(TabuTerminal.class);
 					TabuTerminalPlugin_V1 plug = pluginConstructor.newInstance(this);
 					logger.info("Initialize this!  "+plug.getPluginName());
-					plug.initialize(System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+					plug.initialize(System.getProperty(USER_HOME_PROPERTY_NAME) + File.separator + DOT_TABU_TERMINAL + File.separator + PLUGINS
 							+ File.separator + jar );
 					this.pluginMapV1.put(plug.getPluginName(), plug);
 				}
@@ -473,7 +520,7 @@ public class TabuTerminal extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		this.mainWindow = primaryStage;
+		this.setMainWindow(primaryStage);
 		primaryStage.setOnCloseRequest((WindowEvent event) -> closeAndExit());
 		String cygbash = "C:\\cygwin64\\bin\\bash.exe";
 		String bashflags = " -i -l";
@@ -514,7 +561,6 @@ public class TabuTerminal extends Application {
 
 			@Override
 			public String next() {
-				// TODO Auto-generated method stub
 				return "SSH: " + tabNumber++;
 			}
 
@@ -532,7 +578,6 @@ public class TabuTerminal extends Application {
 
 			@Override
 			public String next() {
-				// TODO Auto-generated method stub
 				return "Telnet: " + tabNumber++;
 			}
 
@@ -604,5 +649,13 @@ public class TabuTerminal extends Application {
 			}
 		}
 		return cmdPrompt;
+	}
+
+	public Stage getMainWindow() {
+		return mainWindow;
+	}
+
+	public void setMainWindow(Stage mainWindow) {
+		this.mainWindow = mainWindow;
 	}
 }

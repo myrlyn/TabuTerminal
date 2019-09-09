@@ -32,10 +32,18 @@
 				<artifactId>javafx-maven-plugin</artifactId>
 				<version>8.8.0</version>
 				<configuration>
-					<bundler>windows.app</bundler>
+					<!-- <bundler>windows.app</bundler> -->
 					<bundleArguments>
 						<icon>${project.basedir}/main/deploy/package/windows/TabuTerminal.ico</icon>
+						<jnlp.outfile>TabuTerminal</jnlp.outfile>
 					</bundleArguments>
+					<j2seVersion>12</j2seVersion>
+					
+					<allPermissions>true</allPermissions>
+					<description>Tabbed Terminal For Windows</description>
+					<title>TabuTerminal</title>
+					<needMenu>true</needMenu>
+					<needShortcut>true</needShortcut>
 					<vendor>Jonathon Walker</vendor>
 					<mainClass>tabuterminal.TabuTerminal</mainClass>
 					<nativeReleaseVersion>${project.version}</nativeReleaseVersion>
@@ -156,6 +164,11 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.9.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.5</version>
 		</dependency>
 	</dependencies>
 </project>
