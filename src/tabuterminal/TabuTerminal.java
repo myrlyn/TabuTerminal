@@ -293,6 +293,7 @@ public class TabuTerminal extends Application {
 			if (pd.isDirectory()) {
 				String[] jars = pd.list((File dir, String name) -> name.toLowerCase().endsWith(".jar"));
 				for (String jar : jars) {
+					logger.info("Found Jar "+jar);
 					loadAndInitializePlugin(jar);
 				}
 			} else {
@@ -304,11 +305,14 @@ public class TabuTerminal extends Application {
 	}
 
 	private void loadAndInitializePlugin(String jar) {
-		try (JarFile jf = new JarFile(jar);) {
-
+		logger.info("Initializ this jar: "+jar.toString());
+		try (JarFile jf = new JarFile( System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+				+ File.separator + jar);) {
+			logger.info("Check Jar File"+jf.toString());
 			Enumeration<JarEntry> pluginEntries = jf.entries();
-			URL[] urls = { new URL("jar:file:" + jar + "!/") };
-
+			URL[] urls = { new URL("jar:file:" + System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+					+ File.separator + jar + "!/") };
+			logger.info("Loader URL: "+urls[0]);
 			try (URLClassLoader jarloader = URLClassLoader.newInstance(urls);) {
 				List<Class<TabuTerminalPlugin_V1>> pluginsToInit;
 				pluginsToInit = new LinkedList<>();
@@ -319,9 +323,9 @@ public class TabuTerminal extends Application {
 						// classname we want to load, we remove the last 6 characters
 						String className = entry.getName().substring(0, entry.getName().length() - 6);
 						className = className.replace('/', '.');// replace separators with dots to construct full class
-																// name
+						logger.info("Class Name: "+className);										// name
 						Class<?> c = jarloader.loadClass(className);
-						if (c.isAssignableFrom(TabuTerminalPlugin_V1.class)) {
+						if (TabuTerminalPlugin_V1.class.isAssignableFrom(c)) {
 							pluginsToInit.add((Class<TabuTerminalPlugin_V1>) c);
 						}
 					}
@@ -329,7 +333,9 @@ public class TabuTerminal extends Application {
 				for (Class<TabuTerminalPlugin_V1> plugin : pluginsToInit) {
 					Constructor<TabuTerminalPlugin_V1> pluginConstructor = plugin.getConstructor(TabuTerminal.class);
 					TabuTerminalPlugin_V1 plug = pluginConstructor.newInstance(this);
-					plug.initalize();
+					logger.info("Initialize this!  "+plug.getPluginName());
+					plug.initialize(System.getProperty("user.home") + File.separator + ".TabuTerminal" + File.separator + "plugins"
+							+ File.separator + jar );
 					this.pluginMapV1.put(plug.getPluginName(), plug);
 				}
 			}
@@ -542,8 +548,7 @@ public class TabuTerminal extends Application {
 		renameTabMenuItem.setOnAction((ActionEvent event) -> renameTab());
 		closeTab.setOnAction((ActionEvent evt) -> closeAndExit());
 		exitApp.setOnAction((ActionEvent evt) -> closeAndExit());
-		addTerminalTab();
-
+		
 		MenuItem sshTabItem = new MenuItem("New SSH Tab");
 		tabMenu.getItems().add(sshTabItem);
 		sshTabItem.setOnAction(evt -> 
@@ -562,6 +567,7 @@ public class TabuTerminal extends Application {
 		// gets a 132x43 character terminal, which is a standard size
 		scene = new Scene(rootBox, 1115, 755);
 		loadPlugins();
+		addTerminalTab();
 		primaryStage.getIcons().add(new Image(TabuTerminal.class.getResourceAsStream("tabu.png")));
 		primaryStage.setScene(scene);
 		primaryStage.show();

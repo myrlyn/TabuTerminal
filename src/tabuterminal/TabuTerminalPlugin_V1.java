@@ -11,7 +11,7 @@ public abstract class TabuTerminalPlugin_V1 {
 	public TabuTerminalPlugin_V1(TabuTerminal jtt) {
 		this.TerminalWindow = jtt;
 	}
-	public abstract void initalize();
+	public abstract void initialize(String jf);
 	public abstract void removePlugin();
 	public abstract String getPluginName();
 }
