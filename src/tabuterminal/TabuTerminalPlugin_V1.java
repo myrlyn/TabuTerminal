@@ -1,5 +1,7 @@
 package tabuterminal;
 
+import java.util.logging.Level;
+
 public abstract class TabuTerminalPlugin_V1 {
 	private TabuTerminal TerminalWindow;
 	public TabuTerminal getTerminalWindow() {
@@ -14,4 +16,10 @@ public abstract class TabuTerminalPlugin_V1 {
 	public abstract void initialize(String jf);
 	public abstract void removePlugin();
 	public abstract String getPluginName();
+	public void applySettings() {
+		TerminalWindow.getLogger().log(Level.INFO,()->{return this.getPluginName()+" does not implement any settings";});
+	}
+	public void saveSettings() {
+		TerminalWindow.getLogger().log(Level.INFO,()->{return this.getPluginName()+" does not implement any settings";});
+	}
 }

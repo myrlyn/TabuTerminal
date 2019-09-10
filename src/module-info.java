@@ -10,4 +10,7 @@ module TabuTerminal {
 	requires transitive com.fasterxml.jackson.annotation;
 	requires transitive org.apache.commons.lang3;
 	requires transitive com.fasterxml.jackson.databind;
+	requires transitive java.sql;
+	requires transitive gson;
+	opens tabuterminal to gson; 
 } 
