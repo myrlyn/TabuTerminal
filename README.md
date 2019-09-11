@@ -1,6 +1,6 @@
 TabuTerminal
 ============
-A tabbed terminal emulator for Windows.  Mostly just a wrapper to add some useful menus to the pre-existing terminalfx project.  
+A tabbed terminal emulator for Windows.  Mostly just a wrapper to add some useful menus to the pre-existing terminalfx project.  This was a quick-and-dirty project written to fill a need at work, that took on a little bit of a life of its own.  
 
 compile from command line
 ---------
@@ -14,6 +14,54 @@ build .exe
 ----------
 mvn jfx:native
 
+Configuration
+---------------
+The config file is stored in ~\.TabuTerminal\settings.json
+
+It is JSON formatted, but allows comments. 
+
+It will be overwritten by the current settings upon applclose.  
+
+The default setting elements are :
+* defaultTerminalConfig
+* sshTerminalConfig
+* telTerminalConfig
+
+Which are JSON representations of the parameters of a TerminalConfig object.  
+
+NOTE - windowsTerminalStarter will be ignored for sshTerminalConfig and telTerminalConfig, as it is programatically replaced at runtime. unixTerminalStarter will be replaced similarly, on UNIX systems (this is currently untested).    
+
+```json
+
+  "defaultTerminalConfig": {
+    "useDefaultWindowCopy": true,
+    "clearSelectionAfterCopy": true,
+    "copyOnSelect": false,
+    "ctrlCCopy": true,
+    "ctrlVPaste": true,
+    "cursorColor": "#FF0000",
+    "backgroundColor": "#101010",
+    "fontSize": 14,
+    "foregroundColor": "#F0F0F0",
+    "cursorBlink": true,
+    "scrollbarVisible": true,
+    "enableClipboardNotice": true,
+    "scrollWhellMoveMultiplier": 0.1,
+    "fontFamily": "\"DejaVu Sans Mono\", \"Everson Mono\", FreeMono, \"Menlo\", \"Terminal\", monospace",
+    "userCss": "data:text/plain;base64,eC1zY3JlZW4geyBjdXJzb3I6IGF1dG87IH0\\u003d",
+    "windowsTerminalStarter": "C:\\cygwin64\\bin\\bash.exe -i -l",
+    "unixTerminalStarter": "/bin/bash -i"
+  },
+  "log_level": "FINE",
+  "ssh_user": "myusername"
+```
+The only other standard config entities are "log_level" (Which takes java.util.Logging.Level names - e.g. INFO) and "ssh_user" which specifies the default user to use for ssh terminal sessions.  
+
+If Cygwin is not installed, or you just want to use CMD for your default terminal, change windowsTerminalStarter to "C:\\WINDOWS\\system32\\cmd.exe" (or the path to your preferred command line shell, complete with arguments).  
+
+If Cygwin is installed anywhere other than C:\\cygwin64, adjust the path accordingly.  
+
+NOTE THAT THE FINAL LINE OF THE FILE MUST NOT END WITH A COMMA
 
 Development
 ===========
@@ -36,11 +84,18 @@ Feel free to report bugs/make feature requests, but I wrote this 100% on a lark 
 TODO
 ========
 In order of priority
-1. enable persistent settings/configuration.
-2. Enable saved sessions for ssh and telnet. 
-3. Ship bash and busybox as built-in executables, so that we don't have to fall back to CMD if cygwin is not installed.  
-4. Implement a sane plugin system, with versioning, security, and a plugin manager. 
-5. Deprecate and disable V1 plugins. 
+1. Configuration UI/menu (Possibly as a plugin)
+2. make SSH and TELNET locations configurable on LINUX
+3. Enable saved sessions for ssh and telnet. (Possibly as a plugin)
+4. Ship bash and busybox as built-in executables, so that we don't have to fall back to CMD if cygwin is not installed.  
+5. Implement a sane plugin system, with versioning, security, and a plugin manager. (Maybe OSGI)
+    - protect against class collisions
+    - versioning
+    - plugin manager (possibly as a plugin)
+    - basic security
+    - allow plugins to easily and safely register new UI and config elements. 
+    - runtime plugin loading, unloading, reloading
+    - Deprecate and disable V1 plugins. 
 6. Test MSI installer. 
 7. Build and test EXE installer. 
 8. Fix JNLP launcher.  

@@ -158,18 +158,25 @@ public class TabuTerminal extends Application
 					String knownHostsfl = knownHostsField.getText();
 					URL sshFile = TabuTerminal.class.getResource("ssh/bin/ssh.exe");
 					String sshFileName = sshFile.getFile();
+
 					File f = new File(sshFileName);
 					String cmd = f.getAbsolutePath();
+					String ucmd = "/usr/bin/ssh";
 					File sshDirFile = new File(homeDir + File.separator + ".ssh");
 					if (!sshDirFile.exists())
 						{
 							sshDirFile.mkdirs();
 						}
 					cmd = cmd + " -o UserKnownHostsFile=" + knownHostsfl + " -F " + " " + conf + " " + args + " ";
+					ucmd = ucmd + " -o UserKnownHostsFile=" + knownHostsfl + " -F " + " " + conf + " " + args + " ";
 					if (!"".equalsIgnoreCase(username))
-						cmd += " " + username + "@";
+						{cmd += " " + username + "@";
+					ucmd += " " + username +"@";
+					}
+					ucmd+=hostname;
 					cmd += hostname;
 					sshTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(cmd);
+					sshTerminalBuilder.getTerminalConfig().setUnixTerminalStarter(ucmd);
 					TerminalTab sshTab = sshTerminalBuilder.newTerminal();
 					tabPane.getTabs().add(sshTab);
 					tabPane.getSelectionModel().select(sshTab);
@@ -207,8 +214,11 @@ public class TabuTerminal extends Application
 					URL telUrl = TabuTerminal.class.getResource("ssh/bin/telnet.exe");
 					File telFile = new File(telUrl.getFile());
 					String telnetcmd = telFile.getAbsolutePath();
+					String utelnetcmd = "/usr/bin/telnet";
 					telnetcmd = telnetcmd + " " + argsField.getText() + " " + hostnameField.getText() + " " + portField.getText();
+					utelnetcmd = utelnetcmd + " " + argsField.getText() + " " + hostnameField.getText() + " " + portField.getText();
 					telTerminalBuilder.getTerminalConfig().setWindowsTerminalStarter(telnetcmd);
+					telTerminalBuilder.getTerminalConfig().setUnixTerminalStarter(utelnetcmd);
 					TerminalTab telnetTab = telTerminalBuilder.newTerminal();
 					tabPane.getTabs().add(telnetTab);
 					tabPane.getSelectionModel().select(telnetTab);
