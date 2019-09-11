@@ -53,6 +53,11 @@ import com.google.gson.stream.JsonReader;
 
 public class TabuTerminal extends Application
 	{
+		private static final String CURSOR_COLOR = "cursorColor";
+		private static final String BACKGROUND_COLOR = "backgroundColor";
+		private static final String FOREGROUND_COLOR = "foregroundColor";
+		private static final String TEL_TERMINAL_CONFIG = "telTerminalConfig";
+		private static final String SSH_TERMINAL_CONFIG = "sshTerminalConfig";
 		private static final String DOT_TABU_TERMINAL_STRING = ".TabuTerminal";
 		private static final String USER_HOME = "user.home";
 		private static final String DOT_TABU_TERMINAL = DOT_TABU_TERMINAL_STRING;
@@ -245,7 +250,7 @@ public class TabuTerminal extends Application
 						this.setDefaultTerminalConfig(t);
 					}
 				TerminalConfig st = null;
-				Object so = settings.get("sshTerminalConfig");
+				Object so = settings.get(SSH_TERMINAL_CONFIG);
 				if (so instanceof TerminalConfig)
 					{
 						st = (TerminalConfig) so;
@@ -255,7 +260,7 @@ public class TabuTerminal extends Application
 						this.setSshTerminalConfig(st);
 					}
 				TerminalConfig tt = null;
-				Object to = settings.get("telTerminalConfig");
+				Object to = settings.get(TEL_TERMINAL_CONFIG);
 				if (to instanceof TerminalConfig)
 					{
 						tt = (TerminalConfig) to;
@@ -269,10 +274,11 @@ public class TabuTerminal extends Application
 						setLogLevel((String) (settings.get("log_level")));
 					}
 				Set<String> pgSet = this.pluginMapV1.keySet();
-				for(String pg: pgSet) {
-					TabuTerminalPlugin_V1 plugin= pluginMapV1.get(pg);
-					plugin.applySettings();
-				}
+				for (String pg : pgSet)
+					{
+						TabuTerminalPlugin_V1 plugin = pluginMapV1.get(pg);
+						plugin.applySettings();
+					}
 			}
 
 		public void setLogLevel(String lv)
@@ -375,6 +381,7 @@ public class TabuTerminal extends Application
 							}
 					}
 				logger.info("Goodbye");
+				this.saveSettings();
 				System.exit(0);
 			}
 
@@ -680,15 +687,16 @@ public class TabuTerminal extends Application
 			{
 				Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
 				settings.put("defaultTerminalConfig", this.getDefaultTerminalConfig());
-				settings.put("sshTerminalConfig", this.getSshTerminalConfig());
-				settings.put("telTerminalConfig", this.getTelTerminalConfig());
+				settings.put(SSH_TERMINAL_CONFIG, this.getSshTerminalConfig());
+				settings.put(TEL_TERMINAL_CONFIG, this.getTelTerminalConfig());
 				File settingsFile = new File(System.getProperty(USER_HOME) + File.separator + DOT_TABU_TERMINAL_STRING
 						+ File.separator + "settings.json");
 				Set<String> pgSet = this.pluginMapV1.keySet();
-				for(String pg: pgSet) {
-					TabuTerminalPlugin_V1 plugin= pluginMapV1.get(pg);
-					plugin.saveSettings();
-				}
+				for (String pg : pgSet)
+					{
+						TabuTerminalPlugin_V1 plugin = pluginMapV1.get(pg);
+						plugin.saveSettings();
+					}
 				try (FileWriter settingsWriter = new FileWriter(settingsFile))
 					{
 						settingsWriter.write(gson.toJson(settings));
@@ -722,7 +730,6 @@ public class TabuTerminal extends Application
 		public void setDefaultTerminalCommand(String defaultTerminalCommand)
 			{
 				this.defaultTerminalCommand = defaultTerminalCommand;
-
 			}
 
 		public void setDefaultTerminalConfig(TerminalConfig defaultTerminalConfig)
@@ -855,38 +862,10 @@ public class TabuTerminal extends Application
 			{
 				this.setMainWindow(primaryStage);
 				primaryStage.setOnCloseRequest((WindowEvent event) -> closeAndExit());
-				String cygbash = "C:\\cygwin64\\bin\\bash.exe";
-				String bashflags = " -i -l";
-				String cmdPrompt = "";
-				if (new File(cygbash).canExecute())
-					{ // start cygwin if it is installed
-						logger.info("Cygwin bash found, using cygwin as default shell");
-						this.setDefaultTerminalCommand(cygbash + bashflags);
-					} else
-					{ // otherwise, find a command interpreter
-						cmdPrompt = findBashPrompt();
-						if (cmdPrompt.equalsIgnoreCase(""))
-							{
-								cmdPrompt = findShPrompt();
-								if (cmdPrompt.equalsIgnoreCase(""))
-									{
-										cmdPrompt = findCmdPrompt();
-									}
-							} else
-							cmdPrompt = cmdPrompt + bashflags;
-						this.setDefaultTerminalCommand(cmdPrompt);
-					}
-				defaultTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
-				defaultTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
-				defaultTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
-				defaultTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
-				defaultTerminalConfig.setCopyOnSelect(true);
+				configureTerminalConfig(defaultTerminalConfig, "defaultTerminalConfig");
 				defaultTerminalBuilder = new TerminalBuilder(defaultTerminalConfig);
-				sshTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
-				sshTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
-				sshTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
-				sshTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
-				sshTerminalConfig.setCopyOnSelect(true);
+				sshTerminalConfig = new TerminalConfig();
+				configureTerminalConfig(sshTerminalConfig, SSH_TERMINAL_CONFIG);
 				sshTerminalBuilder = new TerminalBuilder(sshTerminalConfig);
 				sshTerminalBuilder.setNameGenerator(new TabNameGenerator()
 					{
@@ -899,11 +878,7 @@ public class TabuTerminal extends Application
 							}
 					});
 				telTerminalConfig = new TerminalConfig();
-				telTerminalConfig.setBackgroundColor(Color.rgb(16, 16, 16));
-				telTerminalConfig.setForegroundColor(Color.rgb(240, 240, 240));
-				telTerminalConfig.setCursorColor(Color.rgb(255, 0, 0, 0.5));
-				telTerminalConfig.setWindowsTerminalStarter(defaultTerminalCommand);
-				telTerminalConfig.setCopyOnSelect(true);
+				configureTerminalConfig(telTerminalConfig, TEL_TERMINAL_CONFIG);
 				telTerminalBuilder = new TerminalBuilder(sshTerminalConfig);
 				telTerminalBuilder.setNameGenerator(new TabNameGenerator()
 					{
@@ -940,10 +915,268 @@ public class TabuTerminal extends Application
 				scene = new Scene(rootBox, 1115, 755);
 				primaryStage.getIcons().add(new Image(TabuTerminal.class.getResourceAsStream("tabu.png")));
 				primaryStage.setScene(scene);
-				this.readSettings();
 				this.applySettings();
 				loadPlugins();
 				addTerminalTab();
 				primaryStage.show();
+			}
+
+		private void configureTerminalConfig(TerminalConfig tc, String configKey)
+			{
+				logger.log(Level.INFO, () -> "Configure Terminal: " + configKey);
+				this.readSettings();
+				Object oMap = settings.get(configKey);
+				if (!(Map.class.isAssignableFrom(oMap.getClass())))
+					{
+						logger.log(Level.SEVERE, () -> "misconfigured config element for " + configKey);
+					} else
+					{
+						logger.log(Level.INFO, () -> "Loading from configured map");
+						Map<String, Object> configMap = (Map<String, Object>) settings.get(configKey);
+						configureBackgroundColor(tc, configMap);
+						configureForegroundColor(tc, configMap);
+						configureCursorColor(tc, configMap);
+						configureWIndowsTerminalStarter(tc, configMap);
+						configureCopyOnSelect(tc, configMap);
+						configureUseDefaultWindowCopy(tc, configMap);
+						configureClearSlectionAfterCopy(tc, configMap);
+						configureCtrlCopy(tc, configMap);
+						configureCtrlVPaste(tc, configMap);
+						configureFontSize(tc, configMap);
+						configureCursorBlink(tc, configMap);
+						configureScrollBarVisible(tc, configMap);
+						configureEnableClipboardNotice(tc, configMap);
+						configureScrollWhellMoveMultiplier(tc, configMap);
+						configureFontFamily(tc, configMap);
+						configureUnixTerminalStarter(tc, configMap);
+					}
+			}
+
+		private void configureUnixTerminalStarter(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				configureUserCSS(tc, configMap);
+				Object uts = configMap.get("unixTerminalStarter");
+				if (uts != null)
+					{
+						tc.setUnixTerminalStarter(uts.toString());
+					} else
+					{
+						tc.setUnixTerminalStarter("/bin/bash -i");
+					}
+			}
+
+		private void configureUserCSS(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object ucss = configMap.get("userCss");
+				if (ucss != null)
+					{
+						tc.setUserCss(ucss.toString());
+					} else
+					{
+						tc.setUserCss("data:text/plain;base64,eC1zY3JlZW4geyBjdXJzb3I6IGF1dG87IH0\\u003d");
+					}
+			}
+
+		private void configureFontFamily(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				String fontFamDef = "\"DejaVu Sans Mono\", \"Everson Mono\", FreeMono, \"Menlo\", \"Terminal\", monospace";
+				Object fontFam = configMap.get("fontFamily");
+				if (fontFam != null)
+					{
+						tc.setFontFamily(fontFam.toString());
+					} else
+					{
+						tc.setFontFamily(fontFamDef);
+					}
+			}
+
+		private void configureScrollWhellMoveMultiplier(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object swmm = configMap.get("scrollWhellMoveMultiplier");
+				if (swmm instanceof Float)
+					{
+						tc.setScrollWhellMoveMultiplier((Float) swmm);
+					} else
+					{
+						tc.setScrollWhellMoveMultiplier(0.1);
+					}
+			}
+
+		private void configureEnableClipboardNotice(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object cbn = configMap.get("enableCliboardNotice");
+				if (cbn instanceof Boolean)
+					{
+						tc.setEnableClipboardNotice((Boolean) cbn);
+					} else
+					{
+						tc.setEnableClipboardNotice(true);
+					}
+			}
+
+		private void configureScrollBarVisible(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object sbv = configMap.get("scrollbarVisible");
+				if (sbv instanceof Boolean)
+					{
+						tc.setScrollbarVisible((Boolean) sbv);
+					} else
+					{
+						tc.setScrollbarVisible(true);
+					}
+			}
+
+		private void configureCursorBlink(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object cb = configMap.get("cursorBlink");
+				if (cb instanceof Boolean)
+					{
+						tc.setCursorBlink((Boolean) cb);
+					} else
+					{
+						tc.setCursorBlink(true);
+					}
+			}
+
+		private void configureFontSize(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Object fs = configMap.get("fontSize");
+				if (fs instanceof Integer)
+					{
+						tc.setFontSize((Integer) fs);
+					} else
+					{
+						tc.setFontSize(14);
+					}
+			}
+
+		private void configureCtrlVPaste(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey("ctrlVPaste"))
+					{
+						Object o = configMap.get("ctrlVPaste");
+						if (o instanceof Boolean)
+							{
+								tc.setCtrlVPaste((Boolean) o);
+							}
+					} else
+					{
+						tc.setCtrlVPaste(true);
+					}
+			}
+
+		private void configureCtrlCopy(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey("ctrlCCopy"))
+					{
+						Object o = configMap.get("ctrlCCopy");
+						if (o instanceof Boolean)
+							{
+								tc.setCtrlCCopy((Boolean) o);
+							}
+					} else
+					{
+						tc.setCtrlCCopy(true);
+					}
+			}
+
+		private void configureClearSlectionAfterCopy(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey("clearSelectionAfterCopy"))
+					{
+						Object o = configMap.get("clearSelectionAfterCopy");
+						if (o instanceof Boolean)
+							{
+								tc.setClearSelectionAfterCopy((Boolean) o);
+							}
+					} else
+					{
+						tc.setClearSelectionAfterCopy(true);
+					}
+			}
+
+		private void configureUseDefaultWindowCopy(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey("useDefaultWindowCopy"))
+					{
+						Object o = configMap.get("useDefaultWindowCopy");
+						if (o instanceof Boolean)
+							{
+								tc.setUseDefaultWindowCopy((Boolean) o);
+							}
+					} else
+					{
+						tc.setUseDefaultWindowCopy(true);
+					}
+			}
+
+		private void configureCopyOnSelect(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				Boolean b = null;
+				if (configMap.containsKey("copyOnSelect"))
+					{
+						Object o = configMap.get("copyOnSelect");
+						if (o instanceof Boolean)
+							{
+								b = (Boolean) o;
+							}
+						if (b != null)
+							{
+								tc.setCopyOnSelect(b);
+							} else
+							{
+								tc.setCopyOnSelect(true);
+							}
+					}
+			}
+
+		private void configureWIndowsTerminalStarter(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey("windowsTerminalStarter"))
+					{
+						tc.setWindowsTerminalStarter(configMap.get("windowsTerminalStarter").toString());
+					} else
+					{
+						tc.setWindowsTerminalStarter(defaultTerminalCommand);
+					}
+			}
+
+		private void configureCursorColor(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey(CURSOR_COLOR))
+					{
+						Color webcolor = Color.web(configMap.get(CURSOR_COLOR).toString(), 0.5);
+						tc.setCursorColor(webcolor);
+						logger.log(Level.FINE, () -> "Set cursor color from settings: " + configMap.get(CURSOR_COLOR).toString());
+					} else
+					{
+						tc.setCursorColor(Color.rgb(255, 0, 0, 0.5));
+					}
+			}
+
+		private void configureForegroundColor(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey(FOREGROUND_COLOR))
+					{
+						tc.setForegroundColor(Color.web(configMap.get(FOREGROUND_COLOR).toString()));
+						logger.log(Level.FINE,
+								() -> "Set foreground color from settings: " + configMap.get(FOREGROUND_COLOR).toString());
+					} else
+					{
+						tc.setForegroundColor(Color.rgb(240, 240, 240));
+					}
+			}
+
+		private void configureBackgroundColor(TerminalConfig tc, Map<String, Object> configMap)
+			{
+				if (configMap.containsKey(BACKGROUND_COLOR))
+					{
+						tc.setBackgroundColor(Color.web(configMap.get(BACKGROUND_COLOR).toString()));
+						logger.log(Level.FINE,
+								() -> "Set background color from settings: " + configMap.get(BACKGROUND_COLOR).toString());
+					} else
+					{
+						tc.setBackgroundColor(Color.rgb(16, 16, 16));
+					}
 			}
 	}
