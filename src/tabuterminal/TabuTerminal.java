@@ -283,10 +283,12 @@ public class TabuTerminal extends Application
 
 		public void setLogLevel(String lv)
 			{
+				logger.log(Level.FINE, () -> "SET LOG LEVEL TO "+lv);
 				switch (lv)
 					{
 						case "INFO":
 							logger.setLevel(Level.INFO);
+							
 							break;
 						case "CONFIG":
 							logger.setLevel(Level.CONFIG);
@@ -315,6 +317,7 @@ public class TabuTerminal extends Application
 						default:
 							logger.setLevel(Level.INFO);
 					}
+				logger.info(logger.getLevel().getName());
 			}
 
 		public void closeAllChildren(PtyProcess proc)
@@ -372,11 +375,14 @@ public class TabuTerminal extends Application
 				ObservableList<Tab> tabList = tabPane.getTabs();
 				for (Tab tab : tabList)
 					{
+						logger.fine("Close tab "+tab.getText());
+						
 						if (tab instanceof TerminalTab)
 							{
 								TerminalTab ttab = (TerminalTab) tab;
+								
 								PtyProcess proc = ttab.getProcess();
-								if (proc != null)
+								logger.fine("Destroy Process "+proc.getPid());
 									proc.destroyForcibly();
 							}
 					}

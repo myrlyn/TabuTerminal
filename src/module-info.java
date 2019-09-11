@@ -12,5 +12,5 @@ module TabuTerminal {
 	requires transitive com.fasterxml.jackson.databind;
 	requires transitive java.sql;
 	requires transitive gson;
-	opens tabuterminal to gson; 
+	opens tabuterminal to gson;
 } 
