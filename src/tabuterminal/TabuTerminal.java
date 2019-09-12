@@ -39,14 +39,19 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -57,15 +62,35 @@ import javafx.stage.WindowEvent;
 
 public class TabuTerminal extends Application
 	{
-		private static final String BACKGROUND_COLOR = "backgroundColor";
-		private static final String CURSOR_COLOR = "cursorColor";
+		private static final String BACKGROUND_COLOR_LITERAL = "backgroundColor";
+		private static final String FOREGROUND_COLOR_LITERAL = "foregroundColor";
+		private static final String CURSOR_COLOR_LITERAL = "cursorColor";
+		private static final String ENABLE_CLIPBOARD_NOTICE = "enableClipboardNotice";
+		private static final String DEFAULT_CURSOR_COLOR = "#FF0000";
+		private static final String SCROLL_BAR_VISIBLE = "scrollBarVisible";
+		private static final String WINDOWS_TERMINAL_STARTER = "windowsTerminalStarter";
+		private static final String USER_CSS = "userCss";
+		private static final String DEFAULT_TERMINAL_CONFIG = "defaultTerminalConfig";
+		private static final String USE_DEFAULT_WINDOW_COPY = "useDefaultWindowCopy";
+		private static final String UNIX_TERMINAL_STARTER = "unixTerminalStarter";
+		private static final String FONT_FAMILY = "fontFamily";
+		private static final String SCROLL_WHELL_MOVE_MULTIPLIER = "scrollWhellMoveMultiplier";
+		private static final String FONT_FAMILY_DEFAULT = "\"DejaVu Sans Mono\", \"Everson Mono\", FreeMono, \"Menlo\", \"Terminal\", monospace";
+		private static final String CURSOR_BLINK = "cursorBlink";
+		private static final String CTRL_V_PASTE = "ctrlVPaste";
+		private static final String CTRL_C_COPY = "ctrlCCopy";
+		private static final String COPY_ON_SELECT = "copyOnSelect";
+		private static final String CLEAR_SELECTION_AFTER_COPY = "clearSelectionAfterCopy";
+		private static final String BACKGROUND_COLOR = BACKGROUND_COLOR_LITERAL;
+		private static final String CURSOR_COLOR = CURSOR_COLOR_LITERAL;
 		private static final String DOT_TABU_TERMINAL_STRING = ".TabuTerminal";
-		private static final String FOREGROUND_COLOR = "foregroundColor";
+		private static final String FOREGROUND_COLOR = FOREGROUND_COLOR_LITERAL;
 		private static final String PLUGINS = "plugins";
 		private static final String SSH_TERMINAL_CONFIG = "sshTerminalConfig";
 		private static final String TEL_TERMINAL_CONFIG = "telTerminalConfig";
 		private static final String USER_HOME = "user.home";
 		private static final String USER_HOME_PROPERTY_NAME = USER_HOME;
+		private Stage defaultTerminalSettingsStage = null;
 		
 		public static String getDotTabuTerminal()
 			{
@@ -112,6 +137,9 @@ public class TabuTerminal extends Application
 		private MenuItem telTabItem = new MenuItem("New Telnet Tab");
 		private TerminalBuilder telTerminalBuilder = null;
 		private TerminalConfig telTerminalConfig = null;
+		private MenuItem defaultTerminalSettingsItem = new MenuItem("Default Terminal Settings");
+		private MenuItem sshTerminalSettingsItem = new MenuItem("SSH Terminal Settings");
+		private MenuItem telnetTerminalSettingsItem = new MenuItem("Telnet Terminal Settings");
 		
 		public void addSSHTab(Stage mainStage)
 			{
@@ -378,9 +406,9 @@ public class TabuTerminal extends Application
 			
 		private void configureClearSlectionAfterCopy(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				if (configMap.containsKey("clearSelectionAfterCopy"))
+				if (configMap.containsKey(CLEAR_SELECTION_AFTER_COPY))
 					{
-						Object o = configMap.get("clearSelectionAfterCopy");
+						Object o = configMap.get(CLEAR_SELECTION_AFTER_COPY);
 						if (o instanceof Boolean)
 							{
 								tc.setClearSelectionAfterCopy((Boolean) o);
@@ -395,9 +423,9 @@ public class TabuTerminal extends Application
 		private void configureCopyOnSelect(TerminalConfig tc, Map<String, Object> configMap)
 			{
 				Boolean b = null;
-				if (configMap.containsKey("copyOnSelect"))
+				if (configMap.containsKey(COPY_ON_SELECT))
 					{
-						Object o = configMap.get("copyOnSelect");
+						Object o = configMap.get(COPY_ON_SELECT);
 						if (o instanceof Boolean)
 							{
 								b = (Boolean) o;
@@ -415,9 +443,9 @@ public class TabuTerminal extends Application
 			
 		private void configureCtrlCopy(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				if (configMap.containsKey("ctrlCCopy"))
+				if (configMap.containsKey(CTRL_C_COPY))
 					{
-						Object o = configMap.get("ctrlCCopy");
+						Object o = configMap.get(CTRL_C_COPY);
 						if (o instanceof Boolean)
 							{
 								tc.setCtrlCCopy((Boolean) o);
@@ -431,9 +459,9 @@ public class TabuTerminal extends Application
 			
 		private void configureCtrlVPaste(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				if (configMap.containsKey("ctrlVPaste"))
+				if (configMap.containsKey(CTRL_V_PASTE))
 					{
-						Object o = configMap.get("ctrlVPaste");
+						Object o = configMap.get(CTRL_V_PASTE);
 						if (o instanceof Boolean)
 							{
 								tc.setCtrlVPaste((Boolean) o);
@@ -447,7 +475,7 @@ public class TabuTerminal extends Application
 			
 		private void configureCursorBlink(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				Object cb = configMap.get("cursorBlink");
+				Object cb = configMap.get(CURSOR_BLINK);
 				if (cb instanceof Boolean)
 					{
 						tc.setCursorBlink((Boolean) cb);
@@ -487,8 +515,8 @@ public class TabuTerminal extends Application
 			
 		private void configureFontFamily(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				String fontFamDef = "\"DejaVu Sans Mono\", \"Everson Mono\", FreeMono, \"Menlo\", \"Terminal\", monospace";
-				Object fontFam = configMap.get("fontFamily");
+				String fontFamDef = FONT_FAMILY_DEFAULT;
+				Object fontFam = configMap.get(FONT_FAMILY);
 				if (fontFam != null)
 					{
 						tc.setFontFamily(fontFam.toString());
@@ -540,7 +568,7 @@ public class TabuTerminal extends Application
 			
 		private void configureScrollWhellMoveMultiplier(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				Object swmm = configMap.get("scrollWhellMoveMultiplier");
+				Object swmm = configMap.get(SCROLL_WHELL_MOVE_MULTIPLIER);
 				if (swmm instanceof Float)
 					{
 						tc.setScrollWhellMoveMultiplier((Float) swmm);
@@ -586,7 +614,7 @@ public class TabuTerminal extends Application
 		private void configureUnixTerminalStarter(TerminalConfig tc, Map<String, Object> configMap)
 			{
 				configureUserCSS(tc, configMap);
-				Object uts = configMap.get("unixTerminalStarter");
+				Object uts = configMap.get(UNIX_TERMINAL_STARTER);
 				if (uts != null)
 					{
 						tc.setUnixTerminalStarter(uts.toString());
@@ -599,9 +627,9 @@ public class TabuTerminal extends Application
 			
 		private void configureUseDefaultWindowCopy(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				if (configMap.containsKey("useDefaultWindowCopy"))
+				if (configMap.containsKey(USE_DEFAULT_WINDOW_COPY))
 					{
-						Object o = configMap.get("useDefaultWindowCopy");
+						Object o = configMap.get(USE_DEFAULT_WINDOW_COPY);
 						if (o instanceof Boolean)
 							{
 								tc.setUseDefaultWindowCopy((Boolean) o);
@@ -615,7 +643,7 @@ public class TabuTerminal extends Application
 			
 		private void configureUserCSS(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				Object ucss = configMap.get("userCss");
+				Object ucss = configMap.get(USER_CSS);
 				if (ucss != null)
 					{
 						tc.setUserCss(ucss.toString());
@@ -628,9 +656,9 @@ public class TabuTerminal extends Application
 			
 		private void configureWIndowsTerminalStarter(TerminalConfig tc, Map<String, Object> configMap)
 			{
-				if (configMap.containsKey("windowsTerminalStarter"))
+				if (configMap.containsKey(WINDOWS_TERMINAL_STARTER))
 					{
-						tc.setWindowsTerminalStarter(configMap.get("windowsTerminalStarter").toString());
+						tc.setWindowsTerminalStarter(configMap.get(WINDOWS_TERMINAL_STARTER).toString());
 					}
 				else
 					{
@@ -942,7 +970,7 @@ public class TabuTerminal extends Application
 		public void saveSettings()
 			{
 				Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
-				settings.put("defaultTerminalConfig", this.getDefaultTerminalConfig());
+				settings.put(DEFAULT_TERMINAL_CONFIG, this.getDefaultTerminalConfig());
 				settings.put(SSH_TERMINAL_CONFIG, this.getSshTerminalConfig());
 				settings.put(TEL_TERMINAL_CONFIG, this.getTelTerminalConfig());
 				File settingsFile = new File(
@@ -1157,7 +1185,7 @@ public class TabuTerminal extends Application
 			{
 				this.setMainWindow(primaryStage);
 				primaryStage.setOnCloseRequest((WindowEvent event) -> closeAndExit());
-				configureTerminalConfig(defaultTerminalConfig, "defaultTerminalConfig");
+				configureTerminalConfig(defaultTerminalConfig, DEFAULT_TERMINAL_CONFIG);
 				defaultTerminalBuilder = new TerminalBuilder(defaultTerminalConfig);
 				sshTerminalConfig = new TerminalConfig();
 				configureTerminalConfig(sshTerminalConfig, SSH_TERMINAL_CONFIG);
@@ -1198,9 +1226,32 @@ public class TabuTerminal extends Application
 				sshTabItem.setOnAction(evt -> this.addSSHTab(primaryStage));
 				tabMenu.getItems().add(telTabItem);
 				telTabItem.setOnAction(evt -> this.addTelnetTab(primaryStage));
-				this.menuBar.getMenus().add(settingsMenu);
-				this.settingsMenu.getItems().add(saveSettingsMenuItem);
-				this.settingsMenu.getItems().add(applySettingsMenuItem);
+				menuBar.getMenus().add(settingsMenu);
+				settingsMenu.getItems().add(saveSettingsMenuItem);
+				settingsMenu.getItems().add(applySettingsMenuItem);
+				settingsMenu.getItems().add(defaultTerminalSettingsItem);
+				settingsMenu.getItems().add(sshTerminalSettingsItem);
+				settingsMenu.getItems().add(telnetTerminalSettingsItem);
+				this.defaultTerminalSettingsItem.setOnAction(evt -> {
+					Object omap =  settings.get(DEFAULT_TERMINAL_CONFIG);
+					boolean typesafe = true;
+					if (omap instanceof Map) {
+						for (Entry<?,?> e : ((Map<?,?>)omap).entrySet()) {
+							if (!((e.getKey() instanceof String) &&(e.getValue() instanceof Object))) {
+								typesafe = false;
+								break;
+							}
+						}
+					}
+					Map<String, Object> termMap = null;
+					if (typesafe) {
+						termMap = (Map<String,Object>)omap;
+					}else {
+						termMap = new HashMap<>();
+					}
+					this.defaultTerminalSettingsStage =getTerminalBuilderConfigurationWindow(this.defaultTerminalSettingsStage, termMap,DEFAULT_TERMINAL_CONFIG );
+					this.defaultTerminalSettingsStage.showAndWait();
+				});
 				saveSettingsMenuItem.setOnAction(evt -> this.saveSettings());
 				applySettingsMenuItem.setOnAction(evt -> this.applySettings());
 				rootBox.getChildren().add(menuBar);
@@ -1214,6 +1265,314 @@ public class TabuTerminal extends Application
 				loadPlugins();
 				addTerminalTab();
 				primaryStage.show();
+			}
+			
+		private Stage getTerminalBuilderConfigurationWindow(Stage settingsWindow, Map<String,Object> termsettings, String settingsKey)
+			{
+				if (settingsWindow == null)
+					{
+						settingsWindow = new Stage();
+						settingsWindow.initModality(Modality.APPLICATION_MODAL);
+						settingsWindow.initOwner(this.getMainWindow());
+						VBox dialogVBox = new VBox();
+						// add line item for default window copy
+						HBox useDefaultWindowCopyBox = new HBox();
+						VBox.setVgrow(useDefaultWindowCopyBox, Priority.ALWAYS);
+						Text useDefaultWindowCopyText = new Text(USE_DEFAULT_WINDOW_COPY);
+						HBox.setHgrow(useDefaultWindowCopyText, Priority.ALWAYS);
+						CheckBox useDefaultWindowCopyCheckBox = new CheckBox();
+						HBox.setHgrow(useDefaultWindowCopyCheckBox, Priority.ALWAYS);
+						Object useDefaultWindowCopyObject = termsettings.get(USE_DEFAULT_WINDOW_COPY);
+						if (useDefaultWindowCopyObject instanceof Boolean)
+							useDefaultWindowCopyCheckBox.setSelected((Boolean) useDefaultWindowCopyObject);
+						else
+							useDefaultWindowCopyCheckBox.setSelected(true);
+						useDefaultWindowCopyBox.getChildren().add(useDefaultWindowCopyText);
+						useDefaultWindowCopyBox.getChildren().add(useDefaultWindowCopyCheckBox);
+						dialogVBox.getChildren().add(useDefaultWindowCopyBox);
+						// same for clear selection on copy
+						HBox clearSelectionAfterCopyBox = new HBox();
+						VBox.setVgrow(clearSelectionAfterCopyBox, Priority.ALWAYS);
+						Text clearSelectionAfterCopyText = new Text(CLEAR_SELECTION_AFTER_COPY);
+						HBox.setHgrow(clearSelectionAfterCopyText, Priority.ALWAYS);
+						CheckBox clearSelectionAfterCopyCheckBox = new CheckBox();
+						HBox.setHgrow(clearSelectionAfterCopyCheckBox, Priority.ALWAYS);
+						clearSelectionAfterCopyBox.getChildren().add(clearSelectionAfterCopyText);
+						clearSelectionAfterCopyBox.getChildren().add(clearSelectionAfterCopyCheckBox);
+						if (termsettings.get(CLEAR_SELECTION_AFTER_COPY) instanceof Boolean)
+							clearSelectionAfterCopyCheckBox.setSelected((Boolean) termsettings.get(CLEAR_SELECTION_AFTER_COPY));
+						else
+							clearSelectionAfterCopyCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(clearSelectionAfterCopyBox);
+						// same for copy on select
+						// same for clear selection on copy
+						HBox copyOnSelectBox = new HBox();
+						VBox.setVgrow(copyOnSelectBox, Priority.ALWAYS);
+						Text copyOnSelectText = new Text(COPY_ON_SELECT);
+						HBox.setHgrow(copyOnSelectText, Priority.ALWAYS);
+						CheckBox copyOnSelectCheckBox = new CheckBox();
+						HBox.setHgrow(copyOnSelectCheckBox, Priority.ALWAYS);
+						copyOnSelectBox.getChildren().add(copyOnSelectText);
+						copyOnSelectBox.getChildren().add(copyOnSelectCheckBox);
+						if (termsettings.get(COPY_ON_SELECT) instanceof Boolean)
+							copyOnSelectCheckBox.setSelected((Boolean) termsettings.get(COPY_ON_SELECT));
+						else
+							copyOnSelectCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(copyOnSelectBox);
+						// same for CTRLCCOPY
+						HBox ctrlCCopyBox = new HBox();
+						VBox.setVgrow(ctrlCCopyBox, Priority.ALWAYS);
+						Text ctrlCCopyText = new Text(CTRL_C_COPY);
+						HBox.setHgrow(ctrlCCopyText, Priority.ALWAYS);
+						CheckBox ctrlCCopyCheckBox = new CheckBox();
+						HBox.setHgrow(ctrlCCopyCheckBox, Priority.ALWAYS);
+						ctrlCCopyBox.getChildren().add(ctrlCCopyText);
+						ctrlCCopyBox.getChildren().add(ctrlCCopyCheckBox);
+						if (termsettings.get(CTRL_C_COPY) instanceof Boolean)
+							ctrlCCopyCheckBox.setSelected((Boolean) termsettings.get(CTRL_C_COPY));
+						else
+							ctrlCCopyCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(ctrlCCopyBox);
+						// same for ctrlVPaste
+						HBox ctrlVPasteBox = new HBox();
+						VBox.setVgrow(ctrlVPasteBox, Priority.ALWAYS);
+						Text ctrlVPasteText = new Text(CTRL_V_PASTE);
+						HBox.setHgrow(ctrlVPasteText, Priority.ALWAYS);
+						CheckBox ctrlVPasteCheckBox = new CheckBox();
+						HBox.setHgrow(ctrlVPasteCheckBox, Priority.ALWAYS);
+						ctrlVPasteBox.getChildren().add(ctrlVPasteText);
+						ctrlVPasteBox.getChildren().add(ctrlVPasteCheckBox);
+						if (termsettings.get(CTRL_V_PASTE) instanceof Boolean)
+							ctrlVPasteCheckBox.setSelected((Boolean) termsettings.get(CTRL_V_PASTE));
+						else
+							ctrlVPasteCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(ctrlVPasteBox);
+						// same for cursorColor
+						// ColorPicker
+						HBox cursorColorBox = new HBox();
+						VBox.setVgrow(cursorColorBox, Priority.ALWAYS);
+						Text cursorColorText = new Text(CTRL_V_PASTE);
+						HBox.setHgrow(cursorColorText, Priority.ALWAYS);
+						Color c = Color.web(DEFAULT_CURSOR_COLOR);
+						ColorPicker cursorColorPicker = new ColorPicker(c);
+				
+						if (termsettings.get(CURSOR_COLOR_LITERAL) instanceof String)
+							{
+								c = Color.web(termsettings.get(CURSOR_COLOR_LITERAL).toString());
+								cursorColorPicker.setValue(c);
+							}
+						HBox.setHgrow(cursorColorPicker, Priority.ALWAYS);
+						cursorColorBox.getChildren().add(cursorColorText);
+						cursorColorBox.getChildren().add(cursorColorPicker);
+						dialogVBox.getChildren().add(cursorColorBox);
+						// same for backgroundColor
+						// ColorPicker
+						HBox backgroundColorBox = new HBox();
+						VBox.setVgrow(backgroundColorBox, Priority.ALWAYS);
+						Text backgroundColorText = new Text(CTRL_V_PASTE);
+						HBox.setHgrow(backgroundColorText, Priority.ALWAYS);
+						Color cc = Color.web(DEFAULT_CURSOR_COLOR);
+						ColorPicker backgroundColorPicker = new ColorPicker(cc);
+						if (termsettings.get(BACKGROUND_COLOR_LITERAL) instanceof String)
+							{
+								c = Color.web(termsettings.get(BACKGROUND_COLOR_LITERAL).toString());
+								backgroundColorPicker.setValue(cc);
+							}
+						HBox.setHgrow(backgroundColorPicker, Priority.ALWAYS);
+						backgroundColorBox.getChildren().add(backgroundColorText);
+						backgroundColorBox.getChildren().add(backgroundColorPicker);
+						dialogVBox.getChildren().add(backgroundColorBox);
+						// same for foregroundColor
+						// ColorPicker
+						HBox foregroundColorBox = new HBox();
+						VBox.setVgrow(foregroundColorBox, Priority.ALWAYS);
+						Text foregroundColorText = new Text(CTRL_V_PASTE);
+						HBox.setHgrow(foregroundColorText, Priority.ALWAYS);
+						Color cv = Color.web(DEFAULT_CURSOR_COLOR);
+						ColorPicker foregroundColorPicker = new ColorPicker(cv);
+						if (termsettings.get(FOREGROUND_COLOR_LITERAL) instanceof String)
+							{
+								Color.web(termsettings.get(FOREGROUND_COLOR_LITERAL).toString());
+								foregroundColorPicker.setValue(cv);
+							}
+						HBox.setHgrow(foregroundColorPicker, Priority.ALWAYS);
+						foregroundColorBox.getChildren().add(foregroundColorText);
+						foregroundColorBox.getChildren().add(foregroundColorPicker);
+						dialogVBox.getChildren().add(foregroundColorBox);
+						// same for Font Size
+						HBox fontSizeBox = new HBox();
+						VBox.setVgrow(fontSizeBox, Priority.ALWAYS);
+						Text fontSizeText = new Text("fontSize");
+						HBox.setHgrow(fontSizeText, Priority.ALWAYS);
+						Spinner<Integer> fontSizeSpinner = new Spinner<>();
+						SpinnerValueFactory<Integer> fontSizeSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(3, 128);
+						fontSizeSpinner.setValueFactory(fontSizeSpinnerFactory);
+						HBox.setHgrow(fontSizeSpinner, Priority.ALWAYS);
+						fontSizeBox.getChildren().add(fontSizeText);
+						fontSizeBox.getChildren().add(fontSizeSpinner);
+						dialogVBox.getChildren().add(fontSizeBox);
+						// same for cursor blink
+						HBox cursorBlinkBox = new HBox();
+						VBox.setVgrow(cursorBlinkBox, Priority.ALWAYS);
+						Text cursorBlinkText = new Text(CURSOR_BLINK);
+						HBox.setHgrow(cursorBlinkText, Priority.ALWAYS);
+						CheckBox cursorBlinkCheckBox = new CheckBox();
+						HBox.setHgrow(cursorBlinkCheckBox, Priority.ALWAYS);
+						cursorBlinkBox.getChildren().add(cursorBlinkText);
+						cursorBlinkBox.getChildren().add(cursorBlinkCheckBox);
+						if (termsettings.get(CURSOR_BLINK) instanceof Boolean)
+							cursorBlinkCheckBox.setSelected((Boolean) termsettings.get(CURSOR_BLINK));
+						else
+							cursorBlinkCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(cursorBlinkBox);
+						// same for scrollBar visible
+						HBox scrollBarVisibleBox = new HBox();
+						VBox.setVgrow(scrollBarVisibleBox, Priority.ALWAYS);
+						Text scrollBarVisibleText = new Text(SCROLL_BAR_VISIBLE);
+						HBox.setHgrow(scrollBarVisibleText, Priority.ALWAYS);
+						CheckBox scrollBarVisibleCheckBox = new CheckBox();
+						HBox.setHgrow(scrollBarVisibleCheckBox, Priority.ALWAYS);
+						scrollBarVisibleBox.getChildren().add(scrollBarVisibleText);
+						scrollBarVisibleBox.getChildren().add(scrollBarVisibleCheckBox);
+						if (termsettings.get(SCROLL_BAR_VISIBLE) instanceof Boolean)
+							scrollBarVisibleCheckBox.setSelected((Boolean) termsettings.get(SCROLL_BAR_VISIBLE));
+						else
+							scrollBarVisibleCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(scrollBarVisibleBox);
+						// same for enableClipboardNotice
+						HBox enableClipboardNoticeBox = new HBox();
+						VBox.setVgrow(enableClipboardNoticeBox, Priority.ALWAYS);
+						Text enableClipboardNoticeText = new Text(ENABLE_CLIPBOARD_NOTICE);
+						HBox.setHgrow(enableClipboardNoticeText, Priority.ALWAYS);
+						CheckBox enableClipboardNoticeCheckBox = new CheckBox();
+						HBox.setHgrow(enableClipboardNoticeCheckBox, Priority.ALWAYS);
+						enableClipboardNoticeBox.getChildren().add(enableClipboardNoticeText);
+						enableClipboardNoticeBox.getChildren().add(enableClipboardNoticeCheckBox);
+						if (termsettings.get(ENABLE_CLIPBOARD_NOTICE) instanceof Boolean)
+							enableClipboardNoticeCheckBox.setSelected((Boolean) termsettings.get(ENABLE_CLIPBOARD_NOTICE));
+						else
+							enableClipboardNoticeCheckBox.setSelected(true);
+						dialogVBox.getChildren().add(enableClipboardNoticeBox);
+						// same for scrollWhellMoveMultiplier
+						HBox scrollWhellMoveMultiplierBox = new HBox();
+						VBox.setVgrow(scrollWhellMoveMultiplierBox, Priority.ALWAYS);
+						Text scrollWhellMoveMultiplierText = new Text(SCROLL_WHELL_MOVE_MULTIPLIER);
+						HBox.setHgrow(scrollWhellMoveMultiplierText, Priority.ALWAYS);
+						Spinner<Double> scrollWhellMoveMultiplierSpinner = new Spinner<>();
+						Double initVal = 0.1;
+						if (termsettings.get(SCROLL_WHELL_MOVE_MULTIPLIER) instanceof Double)
+							{
+								initVal = (Double) termsettings.get(SCROLL_WHELL_MOVE_MULTIPLIER);
+							}
+						SpinnerValueFactory<
+						    Double> scrollWhellMoveMultiplierSpinnerFactory = new SpinnerValueFactory.DoubleSpinnerValueFactory(0.1, 100.0, initVal);
+						scrollWhellMoveMultiplierSpinner.setValueFactory(scrollWhellMoveMultiplierSpinnerFactory);
+						HBox.setHgrow(scrollWhellMoveMultiplierSpinner, Priority.ALWAYS);
+						scrollWhellMoveMultiplierBox.getChildren().add(scrollWhellMoveMultiplierText);
+						scrollWhellMoveMultiplierBox.getChildren().add(scrollWhellMoveMultiplierSpinner);
+						dialogVBox.getChildren().add(scrollWhellMoveMultiplierBox);
+						// same for font family
+						HBox fontFamilyBox = new HBox();
+						VBox.setVgrow(fontFamilyBox, Priority.ALWAYS);
+						Text fontFamilyText = new Text(FONT_FAMILY);
+						HBox.setHgrow(fontFamilyText, Priority.ALWAYS);
+						TextField fontFamilyTextField = new TextField();
+						if (termsettings.get(FONT_FAMILY) instanceof String)
+							{
+								fontFamilyTextField.setText(termsettings.get(FONT_FAMILY).toString());
+							}
+						else
+							{
+								fontFamilyTextField.setText(FONT_FAMILY_DEFAULT);
+							}
+						HBox.setHgrow(fontFamilyTextField, Priority.ALWAYS);
+						fontFamilyBox.getChildren().add(fontFamilyText);
+						fontFamilyBox.getChildren().add(fontFamilyTextField);
+						dialogVBox.getChildren().add(fontFamilyBox);
+						// same for userCss
+						HBox userCssBox = new HBox();
+						VBox.setVgrow(userCssBox, Priority.ALWAYS);
+						Text userCssText = new Text(USER_CSS);
+						HBox.setHgrow(userCssText, Priority.ALWAYS);
+						TextField userCssTextField = new TextField();
+						if (termsettings.get(USER_CSS) instanceof String)
+							{
+								userCssTextField.setText(termsettings.get(USER_CSS).toString());
+							}
+						else
+							{
+								userCssTextField.setText("data:text/plain;base64,eC1zY3JlZW4geyBjdXJzb3I6IGF1dG87IH0\\u003d");
+							}
+						HBox.setHgrow(userCssTextField, Priority.ALWAYS);
+						userCssBox.getChildren().add(userCssText);
+						userCssBox.getChildren().add(userCssTextField);
+						dialogVBox.getChildren().add(userCssBox);
+						// same for windowsTerminalStarter
+						HBox windowsTerminalStarterBox = new HBox();
+						VBox.setVgrow(windowsTerminalStarterBox, Priority.ALWAYS);
+						Text windowsTerminalStarterText = new Text(WINDOWS_TERMINAL_STARTER);
+						HBox.setHgrow(windowsTerminalStarterText, Priority.ALWAYS);
+						TextField windowsTerminalStarterTextField = new TextField();
+						if (termsettings.get(WINDOWS_TERMINAL_STARTER) instanceof String)
+							{
+								windowsTerminalStarterTextField.setText(termsettings.get(WINDOWS_TERMINAL_STARTER).toString());
+							}
+						else
+							{
+								windowsTerminalStarterTextField
+								    .setText(FONT_FAMILY_DEFAULT);
+							}
+						HBox.setHgrow(windowsTerminalStarterTextField, Priority.ALWAYS);
+						windowsTerminalStarterBox.getChildren().add(windowsTerminalStarterText);
+						windowsTerminalStarterBox.getChildren().add(windowsTerminalStarterTextField);
+						dialogVBox.getChildren().add(windowsTerminalStarterBox);
+						// same for unixTerminalStarter
+						HBox unixTerminalStarterBox = new HBox();
+						VBox.setVgrow(unixTerminalStarterBox, Priority.ALWAYS);
+						Text unixTerminalStarterText = new Text(UNIX_TERMINAL_STARTER);
+						HBox.setHgrow(unixTerminalStarterText, Priority.ALWAYS);
+						TextField unixTerminalStarterTextField = new TextField();
+						if (termsettings.get(UNIX_TERMINAL_STARTER) instanceof String)
+							{
+								unixTerminalStarterTextField.setText(termsettings.get(UNIX_TERMINAL_STARTER).toString());
+							}
+						else
+							{
+								unixTerminalStarterTextField
+								    .setText(FONT_FAMILY_DEFAULT);
+							}
+						HBox.setHgrow(unixTerminalStarterTextField, Priority.ALWAYS);
+						unixTerminalStarterBox.getChildren().add(unixTerminalStarterText);
+						unixTerminalStarterBox.getChildren().add(unixTerminalStarterTextField);
+						dialogVBox.getChildren().add(unixTerminalStarterBox);
+						Button applyButton = new Button("Apply");
+						dialogVBox.getChildren().add(applyButton);
+						applyButton.setOnAction(evt -> {
+							Map<String,Object> tmpTermSettings = new HashMap<>();
+							tmpTermSettings.put(TabuTerminal.USE_DEFAULT_WINDOW_COPY, useDefaultWindowCopyCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.CLEAR_SELECTION_AFTER_COPY, clearSelectionAfterCopyCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.COPY_ON_SELECT, copyOnSelectCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.CTRL_C_COPY, ctrlCCopyCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.CTRL_V_PASTE, ctrlVPasteCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.CURSOR_COLOR, cursorColorPicker.getValue());
+							tmpTermSettings.put(TabuTerminal.BACKGROUND_COLOR, backgroundColorPicker.getValue());
+							tmpTermSettings.put("fontSize", fontSizeSpinner.getValue());
+							tmpTermSettings.put(TabuTerminal.FOREGROUND_COLOR_LITERAL, foregroundColorPicker.getValue());
+							tmpTermSettings.put("cursorBlink",cursorBlinkCheckBox.isSelected());
+							tmpTermSettings.put("scrollbarVisible",scrollBarVisibleCheckBox.isSelected());
+							tmpTermSettings.put("enableClipboardNotice",enableClipboardNoticeCheckBox.isSelected());
+							tmpTermSettings.put(TabuTerminal.SCROLL_WHELL_MOVE_MULTIPLIER, scrollWhellMoveMultiplierSpinner.getValue());
+							tmpTermSettings.put(TabuTerminal.FONT_FAMILY,fontFamilyTextField.getText());
+							tmpTermSettings.put("userCss",userCssTextField.getText());
+							tmpTermSettings.put(TabuTerminal.WINDOWS_TERMINAL_STARTER,windowsTerminalStarterTextField.getText());
+							tmpTermSettings.put(TabuTerminal.UNIX_TERMINAL_STARTER,unixTerminalStarterTextField.getText());
+							
+							//TODO FINISH BUTTON ACTION
+						});
+						Scene settingsScene = new Scene(dialogVBox);
+						settingsWindow.setScene(settingsScene);
+					}
+				return settingsWindow;
 			}
 			
 		private Map<String, Object> typeSafeGetConfigKey(String configKey)
