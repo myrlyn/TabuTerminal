@@ -12,7 +12,13 @@ mvn javafx:run
 
 build .exe
 ----------
-mvn jfx:native
+mvn jfx:native or mvn package
+
+other build considerations
+--------------------------
+JDK11+ must be your JAVA_HOME (test builds were all done with JDK12)
+
+If JAVAFX11+ is already in your classpath and modulepath (on the machine where you want to run TabuTerminal), you should be able to change the scope of the JAVAFX entries to "provided" to get a smaller distributed package.  
 
 Configuration
 ---------------
