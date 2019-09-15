@@ -90,7 +90,7 @@ Feel free to report bugs/make feature requests, but I wrote this 100% on a lark 
 TODO
 ========
 In order of priority
-1. Configuration UI/menu (Possibly as a plugin)
+1. ~~Configuration UI/menu (Possibly as a plugin)~~
 2. make SSH and TELNET locations configurable on LINUX
 3. Enable saved sessions for ssh and telnet. (Possibly as a plugin)
 4. Ship bash and busybox as built-in executables, so that we don't have to fall back to CMD if cygwin is not installed.  
