@@ -105,7 +105,7 @@ In order of priority
 6. Test MSI installer. 
 7. Build and test EXE installer. 
 8. Fix JNLP launcher.  
-
+9. Fix the UI (Currently all of the Settings windows look terrible, for instance)
 
 PLUGINS
 ===========
