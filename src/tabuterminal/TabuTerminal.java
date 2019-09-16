@@ -1205,6 +1205,8 @@ public class TabuTerminal extends Application
 												// replace separators with dots to construct full classmame
 												String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
 												logger.log(Level.INFO, () -> "Class Name: " + className);
+												if ("module-info".equalsIgnoreCase(className))
+													continue;
 												Class<?> c = jarloader.loadClass(className);
 												if (TabuTerminalPlugin_V1.class.isAssignableFrom(c))
 													{
